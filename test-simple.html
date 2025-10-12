@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple API Test</title>
+</head>
+<body>
+    <h1>Direct API Test (No PDF)</h1>
+    <button onclick="testTextOnly()">Test Text-Only Request</button>
+    <pre id="output"></pre>
+
+    <script>
+        const API_KEY = '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';
+
+        function log(msg) {
+            document.getElementById('output').textContent += msg + '\n';
+            console.log(msg);
+        }
+
+        async function testTextOnly() {
+            document.getElementById('output').textContent = 'Testing...\n';
+
+            const requestBody = {
+                model: 'claude-sonnet-4-5-20250929',
+                max_tokens: 200,
+                messages: [{
+                    role: 'user',
+                    content: 'Analyze this water report: Lead 15ppb, Copper 1.2ppm. What do these levels mean?'
+                }]
+            };
+
+            try {
+                log('Sending request...');
+
+                const response = await fetch('/api/anthropic/v1/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': API_KEY,
+                        'anthropic-version': '2023-06-01',
+                        'anthropic-dangerous-direct-browser-access': 'true'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                log('Response status: ' + response.status);
+
+                const data = await response.json();
+                log('\nResponse:\n' + JSON.stringify(data, null, 2));
+
+                if (response.ok) {
+                    log('\n✅ SUCCESS!');
+                    log('\nClaude says:\n' + data.content[0].text);
+                } else {
+                    log('\n❌ ERROR: ' + (data.error?.message || 'Unknown error'));
+                }
+            } catch (error) {
+                log('\n❌ EXCEPTION: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

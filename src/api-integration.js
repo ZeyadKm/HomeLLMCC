@@ -110,7 +110,8 @@ export async function generateEmail(apiKey, systemPrompt, userPrompt, images = [
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': apiKey,
-        'anthropic-version': ANTHROPIC_VERSION
+        'anthropic-version': ANTHROPIC_VERSION,
+        'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify(requestBody)
     });
@@ -121,8 +122,10 @@ export async function generateEmail(apiKey, systemPrompt, userPrompt, images = [
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
 
+      console.error('[API] Error response:', JSON.stringify(errorData, null, 2));
+
       if (response.status === 401) {
-        throw new Error('Invalid API key. Please check your Anthropic API key.');
+        throw new Error(`Invalid API key: ${errorData.error?.message || 'Please check your Anthropic API key'}`);
       } else if (response.status === 429) {
         throw new Error('Rate limit exceeded. Please try again in a moment.');
       } else if (response.status === 400) {
