@@ -91,8 +91,10 @@
             };
 
             log('Sending request to API...');
+            log('Request body size: ' + JSON.stringify(requestBody).length + ' bytes');
 
             try {
+                log('Calling fetch...');
                 const response = await fetch(API_URL, {
                     method: 'POST',
                     headers: {
@@ -101,8 +103,12 @@
                         'anthropic-version': '2023-06-01'
                     },
                     body: JSON.stringify(requestBody)
+                }).catch(err => {
+                    log('Fetch failed immediately: ' + err.message);
+                    throw err;
                 });
 
+                log('Fetch completed');
                 log('Response status: ' + response.status);
 
                 const data = await response.json();

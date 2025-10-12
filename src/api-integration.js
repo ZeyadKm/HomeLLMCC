@@ -1,7 +1,10 @@
 // API Integration Module for HomeLLM
 // Handles communication with Claude API for email generation and document analysis
 
-const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
+// Use proxy in development to avoid CORS issues
+const ANTHROPIC_API_URL = import.meta.env.DEV
+  ? '/api/anthropic/v1/messages'  // Proxy in development
+  : 'https://api.anthropic.com/v1/messages';  // Direct in production
 const ANTHROPIC_VERSION = '2023-06-01';
 const MODEL = 'claude-sonnet-4-5-20250929'; // Claude Sonnet 4.5 - Latest model
 
