@@ -20,8 +20,12 @@ export function validateApiKey(apiKey) {
 
 // Generate email using Claude API
 export async function generateEmail(apiKey, systemPrompt, userPrompt, images = []) {
+  console.log('[API] generateEmail called');
+  console.log('[API] Images/docs count:', images?.length || 0);
+
   const validation = validateApiKey(apiKey);
   if (!validation.valid) {
+    console.error('[API] API key validation failed:', validation.error);
     throw new Error(validation.error);
   }
 
@@ -30,13 +34,24 @@ export async function generateEmail(apiKey, systemPrompt, userPrompt, images = [
 
   // Add documents (images or PDFs) first if any
   if (images && images.length > 0) {
-    images.forEach(doc => {
+    images.forEach((doc, index) => {
+      console.log(`[API] Processing document ${index + 1}:`, {
+        type: doc.type,
+        size: doc.size,
+        hasData: !!doc.data,
+        dataPrefix: doc.data?.substring(0, 50)
+      });
+
       // Extract base64 data from data URL
       const base64Data = doc.data.split(',')[1];
       const mediaType = doc.type || 'image/jpeg';
 
+      console.log(`[API] Base64 data length:`, base64Data?.length);
+      console.log(`[API] Media type:`, mediaType);
+
       // Check if it's a PDF or image
       if (mediaType === 'application/pdf') {
+        console.log('[API] Adding as PDF document');
         content.push({
           type: 'document',
           source: {
@@ -46,6 +61,7 @@ export async function generateEmail(apiKey, systemPrompt, userPrompt, images = [
           }
         });
       } else {
+        console.log('[API] Adding as image');
         content.push({
           type: 'image',
           source: {
@@ -64,6 +80,8 @@ export async function generateEmail(apiKey, systemPrompt, userPrompt, images = [
     text: userPrompt
   });
 
+  console.log('[API] Content array length:', content.length);
+
   const requestBody = {
     model: MODEL,
     max_tokens: 4096,
@@ -77,7 +95,13 @@ export async function generateEmail(apiKey, systemPrompt, userPrompt, images = [
     ]
   };
 
+  console.log('[API] Request body prepared, model:', MODEL);
+  console.log('[API] System prompt length:', systemPrompt?.length);
+  console.log('[API] User prompt length:', userPrompt?.length);
+
   try {
+    console.log('[API] Sending request to:', ANTHROPIC_API_URL);
+
     const response = await fetch(ANTHROPIC_API_URL, {
       method: 'POST',
       headers: {
@@ -87,6 +111,9 @@ export async function generateEmail(apiKey, systemPrompt, userPrompt, images = [
       },
       body: JSON.stringify(requestBody)
     });
+
+    console.log('[API] Response status:', response.status);
+    console.log('[API] Response ok:', response.ok);
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test PDF API</title>
+</head>
+<body>
+    <h1>Test Claude API with PDF</h1>
+    <input type="file" id="fileInput" accept=".pdf,image/*">
+    <button onclick="testAPI()">Test API</button>
+    <pre id="output"></pre>
+
+    <script>
+        const API_KEY = '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';
+        const API_URL = 'https://api.anthropic.com/v1/messages';
+        const MODEL = 'claude-sonnet-4-5-20250929';
+
+        let fileData = null;
+        let fileType = null;
+
+        document.getElementById('fileInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    fileData = event.target.result;
+                    fileType = file.type;
+                    log(`File loaded: ${file.name}, type: ${file.type}, size: ${file.size}`);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function log(msg) {
+            const output = document.getElementById('output');
+            output.textContent += msg + '\n';
+            console.log(msg);
+        }
+
+        async function testAPI() {
+            document.getElementById('output').textContent = '';
+
+            if (!fileData) {
+                log('ERROR: No file selected');
+                return;
+            }
+
+            log('Starting API test...');
+            log('File type: ' + fileType);
+
+            // Extract base64
+            const base64Data = fileData.split(',')[1];
+            log('Base64 length: ' + base64Data.length);
+
+            // Build content
+            const content = [];
+
+            if (fileType === 'application/pdf') {
+                log('Adding as PDF document');
+                content.push({
+                    type: 'document',
+                    source: {
+                        type: 'base64',
+                        media_type: 'application/pdf',
+                        data: base64Data
+                    }
+                });
+            } else {
+                log('Adding as image');
+                content.push({
+                    type: 'image',
+                    source: {
+                        type: 'base64',
+                        media_type: fileType,
+                        data: base64Data
+                    }
+                });
+            }
+
+            content.push({
+                type: 'text',
+                text: 'Briefly describe what you see in this document in 1-2 sentences.'
+            });
+
+            const requestBody = {
+                model: MODEL,
+                max_tokens: 200,
+                messages: [{
+                    role: 'user',
+                    content: content
+                }]
+            };
+
+            log('Sending request to API...');
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': API_KEY,
+                        'anthropic-version': '2023-06-01'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                log('Response status: ' + response.status);
+
+                const data = await response.json();
+                log('Response received:');
+                log(JSON.stringify(data, null, 2));
+
+                if (response.ok) {
+                    log('\n✅ SUCCESS!');
+                    log('Claude says: ' + data.content[0].text);
+                } else {
+                    log('\n❌ ERROR!');
+                    log('Error: ' + (data.error?.message || 'Unknown error'));
+                }
+            } catch (error) {
+                log('\n❌ EXCEPTION!');
+                log('Error: ' + error.message);
+                log('Stack: ' + error.stack);
+            }
+        }
+    </script>
+</body>
+</html>

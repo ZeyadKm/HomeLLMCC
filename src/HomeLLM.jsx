@@ -401,14 +401,23 @@ export default function HomeLLM() {
     setWaterAnalysis(null);
 
     try {
+      console.log('[Water Analysis] Starting analysis...');
+      console.log('[Water Analysis] Document type:', waterReport.type);
+      console.log('[Water Analysis] Document size:', waterReport.size);
+      console.log('[Water Analysis] API key present:', !!apiKey);
+
       // Generate analysis prompt
       const documentTypeDesc = waterReport.type === 'application/pdf'
         ? 'See attached water quality report PDF'
         : 'See attached water quality report image';
       const analysisPrompt = generateDocumentAnalysisPrompt('waterReport', documentTypeDesc);
 
+      console.log('[Water Analysis] Prompt generated, length:', analysisPrompt.length);
+
       // Analyze the document with vision/PDF support
       const systemPrompt = 'You are an expert water quality analyst with deep knowledge of EPA drinking water standards, state regulations, and health effects of water contaminants.';
+
+      console.log('[Water Analysis] Calling API...');
 
       // Claude API supports both images and PDFs
       const result = await API.analyzeDocument(
@@ -418,15 +427,22 @@ export default function HomeLLM() {
         [waterReport] // Send document regardless of type
       );
 
+      console.log('[Water Analysis] API response received:', result.success);
+
       if (result.success) {
+        console.log('[Water Analysis] Analysis successful, length:', result.email?.length);
         setWaterAnalysis(result.email);
       } else {
+        console.error('[Water Analysis] Analysis failed');
         setError('Failed to analyze water report');
       }
     } catch (err) {
-      setError(err.message);
+      console.error('[Water Analysis] Error:', err);
+      console.error('[Water Analysis] Error stack:', err.stack);
+      setError(err.message || 'An error occurred during analysis');
     } finally {
       setIsAnalyzingWater(false);
+      console.log('[Water Analysis] Analysis complete');
     }
   };
 
