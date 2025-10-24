@@ -348,19 +348,91 @@ function getToneGuidance(escalationLevel) {
 // Generate prompt for document analysis (water reports, warranties, etc.)
 export function generateDocumentAnalysisPrompt(documentType, documentText, analysisGoals) {
   const prompts = {
-    waterReport: `You are an expert in water quality analysis and EPA drinking water standards. Analyze the following water quality report and provide:
+    waterReport: `You are an expert water quality analyst with deep knowledge of EPA standards, health impacts, and treatment solutions. Analyze this water quality report with extreme thoroughness and provide actionable insights.
 
-1. **Contaminant Analysis**: Identify any contaminants that exceed EPA Maximum Contaminant Levels (MCLs) or action levels
-2. **Health Risk Assessment**: Explain potential health risks for identified contaminants
-3. **Vulnerable Populations**: Note special concerns for children, pregnant women, or immunocompromised individuals
-4. **Comparison to Standards**: Compare results to EPA standards, state standards, and health-based goals
-5. **Recommended Actions**: Suggest remediation steps, filtration, or testing recommendations
-6. **Citation Readiness**: Provide specific regulation citations that can be used in advocacy emails
-
-## Water Quality Report:
+WATER QUALITY REPORT:
 ${documentText}
 
-Provide a comprehensive analysis in clear, actionable language that can be used to draft advocacy correspondence.`,
+CRITICAL INSTRUCTIONS:
+- Use PLAIN TEXT ONLY - absolutely NO markdown formatting (no **, no ###, no _, no backticks)
+- Use the EXACT format shown below with EXACT section headers
+- Include ALL detected contaminants, not just the concerning ones
+- ALWAYS include verifiable sources (URLs, program names, specific regulations) so information can be double-checked
+- Be extremely thorough and detailed
+- Include specific website URLs (like EPA.gov, utility websites, etc.) in recommendations
+
+Provide your analysis in this EXACT format:
+
+OVERALL ASSESSMENT:
+[Write 2-3 sentences summarizing overall water safety, noting any violations, and mentioning utility programs. Plain text only.]
+
+EPA VIOLATIONS:
+- [Violation 1 description]
+- [Violation 2 description]
+[Continue for all violations. Use simple dashes, not bullet points or other symbols]
+
+AREAS OF CONCERN:
+- [Concern 1: Contaminant name - detected value compared to limit]
+- [Concern 2: Contaminant name - detected value compared to limit]
+[Continue for all concerns. Plain text with dashes only.]
+
+DETECTED CONTAMINANTS (##):
+[Replace ## with the actual count. Then list EVERY contaminant in this exact format:]
+
+CONTAMINANT: Lead
+DETECTED: 4.0 ppb (90th percentile)
+EPA LIMIT: 15 ppb (action level)
+HEALTH EFFECTS: Causes developmental delays in children, kidney problems, reproductive issues in adults
+SEVERITY: MEDIUM
+
+---
+
+CONTAMINANT: Fluoride
+DETECTED: 585-675 ppb average
+EPA LIMIT: 4,000 ppb
+HEALTH EFFECTS: Prevents tooth decay at optimal levels; can cause fluorosis above 2,000 ppb
+SEVERITY: LOW
+
+---
+
+[Continue this EXACT format for EVERY single detected contaminant. Use --- as separator between each contaminant. NO other formatting.]
+
+FILTER RECOMMENDATIONS:
+
+Lead -> NSF-certified lead removal pitcher filter or under-sink system
+Lead detected above action level at some sites; filters provide additional protection
+Cost: $20-50 for pitcher filters, $200-500 for under-sink systems
+
+Chlorine/Disinfection Byproducts -> Activated carbon filter (pitcher, faucet-mount, or under-sink)
+Reduces chlorine taste/odor and helps lower trihalomethanes and haloacetic acids
+Cost: $15-30 for pitcher, $30-100 for faucet-mount, $100-300 for under-sink
+
+[Continue for each relevant contaminant. Plain text only, use -> for arrows]
+
+RECOMMENDED ACTIONS:
+1. Check if you have a lead service line using the utility's interactive map - Source: Denver Water at denverwater.org/lead or call 303-893-2444
+2. Request a free lead test kit if concerned about lead levels - Source: EPA Safe Drinking Water Hotline at 800-426-4791 or water.epa.gov/drink
+3. Flush cold water for 5 minutes if water hasn't been used for several hours - Source: CDC Lead Prevention at cdc.gov/lead
+4. Replace plumbing fixtures manufactured before 2014 with lead-free components - Source: EPA Lead and Copper Rule at epa.gov/dwreginfo/lead-and-copper-rule
+[Continue numbering. ALWAYS include verifiable sources with actual URLs, phone numbers, or specific program names. Make sources as specific as possible.]
+
+ASSISTANCE PROGRAMS:
+- Lead Reduction Program: Free replacement of lead service lines with copper, free water filters for affected customers - Contact: denverwater.org/lead or 303-893-2444
+- Enhanced Water Treatment: pH adjustment and corrosion control to minimize lead leaching - Contact: Water Quality at denverwater.org/water-quality
+- Free Lead Testing: Customers can request free lead test kits - Contact: 303-893-2444 or denverwater.org/leadtest
+- Water Quality Monitoring: Over 145,000 tests conducted annually across the system - Source: 2025 Water Quality Report at denverwater.org/ccr
+[Continue with dashes. Include specific contact information (phone, website URL, email) for each program. Make it easy for users to access and verify these programs.]
+
+DISCLAIMER:
+[Write disclaimer about analysis source, individual results varying by location, and contact information. Plain text.]
+
+REGULATORY CITATIONS:
+- Safe Drinking Water Act, 42 U.S.C. Section 300f et seq.
+- EPA Lead and Copper Rule, 40 CFR 141.80-141.91
+- [Additional relevant citations]
+[Use simple dashes. Plain text only.]
+
+IMPORTANT: Use PLAIN TEXT throughout. No asterisks, no hashtags, no underscores, no backticks. This is critical for proper display.`,
 
     warranty: `You are an expert in consumer warranty law and product warranties. Analyze the following warranty document and provide:
 

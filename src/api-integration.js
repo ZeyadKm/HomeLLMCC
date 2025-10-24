@@ -1,11 +1,9 @@
 // API Integration Module for HomeLLM
 // Handles communication with Claude API for email generation and document analysis
 
-// Use serverless function for all API calls (development and production)
-const API_ENDPOINT = import.meta.env.DEV
-  ? '/api/analyze-document'  // Local serverless function in dev
-  : '/api/analyze-document'; // Vercel serverless function in production
-
+// Use Vite proxy to forward requests to Anthropic API (avoids CORS)
+const ANTHROPIC_API_URL = '/api/anthropic/v1/messages';
+const ANTHROPIC_VERSION = '2023-06-01';
 const MODEL = 'claude-sonnet-4-5-20250929'; // Claude Sonnet 4.5 - Latest model
 
 // Validate API key format
@@ -21,7 +19,7 @@ export function validateApiKey(apiKey) {
   return { valid: true, error: null };
 }
 
-// Generate email using Claude API via serverless function
+// Generate email using Claude API
 export async function generateEmail(apiKey, systemPrompt, userPrompt, images = []) {
   console.log('[API] generateEmail called');
   console.log('[API] Images/docs count:', images?.length || 0);
@@ -32,39 +30,85 @@ export async function generateEmail(apiKey, systemPrompt, userPrompt, images = [
     throw new Error(validation.error);
   }
 
-  console.log('[API] Preparing documents...');
+  // Build message content with text, images, and PDFs
+  const content = [];
 
-  // Prepare documents array for serverless function
-  const documents = images.map((doc, index) => {
-    console.log(`[API] Document ${index + 1}:`, {
-      type: doc.type,
-      size: doc.size,
-      hasData: !!doc.data
+  // Add documents (images or PDFs) first if any
+  if (images && images.length > 0) {
+    images.forEach((doc, index) => {
+      console.log(`[API] Processing document ${index + 1}:`, {
+        type: doc.type,
+        size: doc.size,
+        hasData: !!doc.data
+      });
+
+      // Extract base64 data from data URL
+      const base64Data = doc.data.split(',')[1];
+      const mediaType = doc.type || 'image/jpeg';
+
+      console.log(`[API] Base64 data length:`, base64Data?.length);
+      console.log(`[API] Media type:`, mediaType);
+
+      // Check if it's a PDF or image
+      if (mediaType === 'application/pdf') {
+        console.log('[API] Adding as PDF document');
+        content.push({
+          type: 'document',
+          source: {
+            type: 'base64',
+            media_type: 'application/pdf',
+            data: base64Data
+          }
+        });
+      } else {
+        console.log('[API] Adding as image');
+        content.push({
+          type: 'image',
+          source: {
+            type: 'base64',
+            media_type: mediaType,
+            data: base64Data
+          }
+        });
+      }
     });
+  }
 
-    return {
-      type: doc.type,
-      data: doc.data // Keep full data URL
-    };
+  // Add text prompt
+  content.push({
+    type: 'text',
+    text: userPrompt
   });
 
+  console.log('[API] Content array length:', content.length);
+
   const requestBody = {
-    apiKey: apiKey,
-    systemPrompt: systemPrompt,
-    userPrompt: userPrompt,
-    documents: documents
+    model: MODEL,
+    max_tokens: 4096,
+    temperature: 1,
+    system: systemPrompt,
+    messages: [
+      {
+        role: 'user',
+        content: content
+      }
+    ]
   };
 
-  console.log('[API] Sending to serverless function:', API_ENDPOINT);
+  console.log('[API] Request body prepared, model:', MODEL);
   console.log('[API] System prompt length:', systemPrompt?.length);
   console.log('[API] User prompt length:', userPrompt?.length);
-  console.log('[API] Documents:', documents.length);
 
   try {
-    const response = await fetch(API_ENDPOINT, {
+    console.log('[API] Sending request to:', ANTHROPIC_API_URL);
+
+    const response = await fetch(ANTHROPIC_API_URL, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': ANTHROPIC_VERSION,
+        'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify(requestBody)
     });
@@ -72,32 +116,41 @@ export async function generateEmail(apiKey, systemPrompt, userPrompt, images = [
     console.log('[API] Response status:', response.status);
     console.log('[API] Response ok:', response.ok);
 
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+
+      console.error('[API] Error response:', JSON.stringify(errorData, null, 2));
+
+      if (response.status === 401) {
+        throw new Error(`Invalid API key: ${errorData.error?.message || 'Please check your Anthropic API key'}`);
+      } else if (response.status === 429) {
+        throw new Error('Rate limit exceeded. Please try again in a moment.');
+      } else if (response.status === 400) {
+        throw new Error(`Bad request: ${errorData.error?.message || 'Invalid request parameters'}`);
+      } else {
+        throw new Error(`API error (${response.status}): ${errorData.error?.message || 'Unknown error'}`);
+      }
+    }
+
     const data = await response.json();
 
-    if (!response.ok) {
-      console.error('[API] Error response:', data);
-      throw new Error(data.error || `Server error (${response.status})`);
+    if (!data.content || !data.content[0] || !data.content[0].text) {
+      throw new Error('Unexpected API response format');
     }
-
-    if (!data.success) {
-      throw new Error('Unexpected response format');
-    }
-
-    console.log('[API] Success! Email length:', data.email?.length);
 
     return {
       success: true,
-      email: data.email,
-      usage: data.usage || {
-        inputTokens: 0,
-        outputTokens: 0
+      email: data.content[0].text,
+      usage: {
+        inputTokens: data.usage?.input_tokens || 0,
+        outputTokens: data.usage?.output_tokens || 0
       }
     };
   } catch (error) {
     console.error('[API] Error:', error);
 
-    if (error.message.includes('fetch')) {
-      throw new Error('Network error. Please check your internet connection.');
+    if (error.name === 'TypeError' || error.message.includes('fetch')) {
+      throw new Error('Network error. Please check your internet connection and API key.');
     }
 
     throw error;
