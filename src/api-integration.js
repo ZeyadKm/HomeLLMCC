@@ -37,7 +37,8 @@ export async function generateEmail(apiKey, systemPrompt, userPrompt, images = [
       console.log(`[API] Processing document ${index + 1}:`, {
         type: doc.type,
         size: doc.size,
-        hasData: !!doc.data
+        hasData: !!doc.data,
+        dataPrefix: doc.data?.substring(0, 30)
       });
 
       documents.push({
@@ -62,6 +63,7 @@ export async function generateEmail(apiKey, systemPrompt, userPrompt, images = [
 
   try {
     console.log('[API] Sending request to:', SERVERLESS_API_URL);
+    console.log('[API] Request body size:', JSON.stringify(requestBody).length, 'bytes');
 
     const response = await fetch(SERVERLESS_API_URL, {
       method: 'POST',
@@ -73,27 +75,42 @@ export async function generateEmail(apiKey, systemPrompt, userPrompt, images = [
 
     console.log('[API] Response status:', response.status);
     console.log('[API] Response ok:', response.ok);
+    console.log('[API] Response headers:', Object.fromEntries(response.headers.entries()));
+
+    const responseText = await response.text();
+    console.log('[API] Response text length:', responseText.length);
+    console.log('[API] Response preview:', responseText.substring(0, 200));
+
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error('[API] JSON parse error:', parseError);
+      console.error('[API] Raw response:', responseText);
+      throw new Error('Invalid JSON response from server: ' + responseText.substring(0, 100));
+    }
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-
-      console.error('[API] Error response:', JSON.stringify(errorData, null, 2));
+      console.error('[API] Error response:', JSON.stringify(data, null, 2));
 
       if (response.status === 401) {
-        throw new Error(`Invalid API key: ${errorData.error || 'Please check your Anthropic API key'}`);
+        throw new Error(`Invalid API key: ${data.error || 'Please check your Anthropic API key'}`);
       } else if (response.status === 429) {
         throw new Error('Rate limit exceeded. Please try again in a moment.');
       } else if (response.status === 400) {
-        throw new Error(`Bad request: ${errorData.error || 'Invalid request parameters'}`);
+        throw new Error(`Bad request: ${data.error || 'Invalid request parameters'}`);
       } else {
-        throw new Error(`API error (${response.status}): ${errorData.error || 'Unknown error'}`);
+        throw new Error(`API error (${response.status}): ${data.error || 'Unknown error'}`);
       }
     }
 
-    const data = await response.json();
+    console.log('[API] Response data keys:', Object.keys(data));
+    console.log('[API] Success:', data.success);
+    console.log('[API] Has email:', !!data.email);
 
     if (!data.success || !data.email) {
-      throw new Error('Unexpected API response format');
+      console.error('[API] Invalid response structure:', data);
+      throw new Error('Unexpected API response format - missing success or email field');
     }
 
     return {
@@ -105,10 +122,12 @@ export async function generateEmail(apiKey, systemPrompt, userPrompt, images = [
       }
     };
   } catch (error) {
-    console.error('[API] Error:', error);
+    console.error('[API] Error occurred:', error);
+    console.error('[API] Error name:', error.name);
+    console.error('[API] Error message:', error.message);
 
     if (error.name === 'TypeError' || error.message.includes('fetch')) {
-      throw new Error('Network error. Please check your internet connection and API key.');
+      throw new Error('Network error. Please check your internet connection and ensure the API server is running.');
     }
 
     throw error;

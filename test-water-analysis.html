@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Water Analysis Test</title>
+</head>
+<body>
+    <h1>Water Analysis API Test</h1>
+    <input type="file" id="fileInput" accept="image/*,.pdf">
+    <button onclick="testAnalysis()">Test Analysis</button>
+    <pre id="output"></pre>
+
+    <script>
+        let fileData = null;
+        
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    fileData = {
+                        name: file.name,
+                        type: file.type,
+                        data: event.target.result,
+                        size: file.size
+                    };
+                    document.getElementById('output').textContent = 'File loaded: ' + file.name;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        async function testAnalysis() {
+            if (!fileData) {
+                alert('Please select a file first');
+                return;
+            }
+
+            const apiKey = prompt('Enter your Anthropic API key:');
+            if (!apiKey) return;
+
+            document.getElementById('output').textContent = 'Testing...\n';
+
+            try {
+                console.log('Sending request to /api/analyze-document');
+                console.log('File type:', fileData.type);
+                console.log('File size:', fileData.size);
+
+                const response = await fetch('/api/analyze-document', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        apiKey: apiKey,
+                        systemPrompt: 'You are a water quality analyst.',
+                        userPrompt: 'Analyze this water report briefly.',
+                        documents: [{
+                            type: fileData.type,
+                            data: fileData.data
+                        }]
+                    })
+                });
+
+                console.log('Response status:', response.status);
+                const result = await response.json();
+                console.log('Response:', result);
+
+                document.getElementById('output').textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('output').textContent = 'ERROR: ' + error.message + '\n\n' + error.stack;
+            }
+        }
+    </script>
+</body>
+</html>
