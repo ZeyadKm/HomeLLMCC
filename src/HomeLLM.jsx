@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Send, FileText, AlertCircle, CheckCircle, Loader2, Copy, Download, Droplet, Shield, FileCheck, Mail, Upload, X, Eye, EyeOff, Save, Clock, ExternalLink, Search, Info } from 'lucide-react';
+import { Send, FileText, AlertCircle, CheckCircle, Loader2, Copy, Download, Droplet, Shield, FileCheck, Mail, Upload, X, Eye, EyeOff, Save, Clock, ExternalLink, Search, Info, Sparkles } from 'lucide-react';
 import { getRelevantRegulations, issueTypeMapping } from './regulatory-knowledge-base';
 import { systemPrompt, generateEmailPrompt, generateDocumentAnalysisPrompt, generateSubjectLine } from './email-prompt-engine';
 import * as API from './api-integration';
 import * as WebVerify from './web-verification';
 import WaterAnalysisResults from './components/WaterAnalysisResults';
+import { InputField, SelectField, TextareaField, LoadingState, Alert, Card, Badge, Tooltip, SectionHeader } from './components/UIComponents';
 
 export default function HomeLLM() {
   const [activeTab, setActiveTab] = useState('email');
@@ -39,6 +40,7 @@ export default function HomeLLM() {
   const [generatedSubject, setGeneratedSubject] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
   const [attachedImages, setAttachedImages] = useState([]);
   const [isLookingUpCodes, setIsLookingUpCodes] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -129,6 +131,15 @@ export default function HomeLLM() {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
 
+    // Clear field error when user types
+    if (fieldErrors[name]) {
+      setFieldErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+
     // Check urgency when measurements or health impact change
     if (name === 'measurements' || name === 'healthImpact') {
       const alert = API.assessUrgency(formData.issueType,
@@ -205,10 +216,23 @@ export default function HomeLLM() {
 
   const validateForm = () => {
     const required = ['issueType', 'recipient', 'location', 'city', 'state', 'evidence', 'desiredOutcome', 'senderName', 'senderEmail'];
-    const missing = required.filter(field => !formData[field]);
+    const errors = {};
 
-    if (missing.length > 0) {
-      setError(`Please fill in required fields: ${missing.join(', ')}`);
+    required.forEach(field => {
+      if (!formData[field]) {
+        errors[field] = 'This field is required';
+      }
+    });
+
+    // Validate email format
+    if (formData.senderEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.senderEmail)) {
+      errors.senderEmail = 'Please enter a valid email address';
+    }
+
+    setFieldErrors(errors);
+
+    if (Object.keys(errors).length > 0) {
+      setError('Please fill in all required fields correctly');
       return false;
     }
 
@@ -583,16 +607,24 @@ export default function HomeLLM() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-teal-50 to-green-50 p-4">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-teal-600 rounded-xl shadow-2xl p-8 mb-6 text-white">
+        <div className="bg-gradient-to-r from-blue-600 to-teal-600 rounded-xl shadow-2xl p-8 mb-6 text-white fade-in">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-4xl font-bold flex items-center gap-3">
-                <Shield className="w-10 h-10" />
-                HomeLLM
+              <h1 className="text-4xl font-bold flex items-center gap-3 slide-in">
+                <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
+                  <Shield className="w-10 h-10" />
+                </div>
+                <span>HomeLLM</span>
               </h1>
-              <p className="text-blue-100 mt-2 text-lg">AI-Powered Home Health Advocacy Platform</p>
+              <p className="text-blue-100 mt-2 text-lg font-medium">AI-Powered Home Health Advocacy Platform</p>
               <p className="text-blue-200 text-sm mt-1">Empowering residents with data-driven advocacy tools</p>
             </div>
+            {apiKey && !apiKeyError && (
+              <Badge variant="success" className="bg-green-100/90 text-green-800 px-4 py-2">
+                <CheckCircle className="w-4 h-4 mr-1" />
+                Connected
+              </Badge>
+            )}
           </div>
 
           {/* API Key Input - Only show if not set or has error */}
@@ -718,10 +750,9 @@ export default function HomeLLM() {
 
               {/* Error Display */}
               {error && (
-                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                  <p className="text-red-800">{error}</p>
-                </div>
+                <Alert type="error" onClose={() => setError('')} className="mb-6">
+                  <p className="font-medium">{error}</p>
+                </Alert>
               )}
 
               <div className="grid md:grid-cols-2 gap-6">
@@ -730,98 +761,81 @@ export default function HomeLLM() {
                   <h2 className="text-xl font-bold text-gray-800 mb-4">Issue Details</h2>
 
                   {/* Issue Type */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Issue Type *
-                    </label>
-                    <select
-                      name="issueType"
-                      value={formData.issueType}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                      required
-                    >
-                      <option value="">Select issue type...</option>
-                      {issueTypes.map(type => (
-                        <option key={type.value} value={type.value}>
-                          {type.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <SelectField
+                    name="issueType"
+                    label="Issue Type"
+                    value={formData.issueType}
+                    onChange={handleInputChange}
+                    error={fieldErrors.issueType}
+                    required
+                    tooltip="Select the primary health or safety issue affecting your property"
+                  >
+                    <option value="">Select issue type...</option>
+                    {issueTypes.map(type => (
+                      <option key={type.value} value={type.value}>
+                        {type.label}
+                      </option>
+                    ))}
+                  </SelectField>
 
                   {/* Recipient */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Send To *
-                    </label>
-                    <select
-                      name="recipient"
-                      value={formData.recipient}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                      required
-                    >
-                      <option value="">Select recipient...</option>
-                      {recipients.map(recipient => (
-                        <option key={recipient.value} value={recipient.value}>
-                          {recipient.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <SelectField
+                    name="recipient"
+                    label="Send To"
+                    value={formData.recipient}
+                    onChange={handleInputChange}
+                    error={fieldErrors.recipient}
+                    required
+                    tooltip="Who will receive this advocacy email?"
+                  >
+                    <option value="">Select recipient...</option>
+                    {recipients.map(recipient => (
+                      <option key={recipient.value} value={recipient.value}>
+                        {recipient.label}
+                      </option>
+                    ))}
+                  </SelectField>
 
                   {/* Location */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Property Address *
-                    </label>
-                    <input
-                      type="text"
-                      name="location"
-                      value={formData.location}
-                      onChange={handleInputChange}
-                      placeholder="123 Main St, Apt 4B"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
+                  <InputField
+                    type="text"
+                    name="location"
+                    label="Property Address"
+                    value={formData.location}
+                    onChange={handleInputChange}
+                    error={fieldErrors.location}
+                    placeholder="123 Main St, Apt 4B"
+                    required
+                    tooltip="The full street address of the affected property"
+                  />
 
                   {/* City and State */}
                   <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        City *
-                      </label>
-                      <input
-                        type="text"
-                        name="city"
-                        value={formData.city}
-                        onChange={handleInputChange}
-                        placeholder="City"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        State *
-                      </label>
-                      <select
-                        name="state"
-                        value={formData.state}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                        required
-                      >
-                        <option value="">State</option>
-                        {statesList.map(state => (
-                          <option key={state} value={state}>
-                            {state}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    <InputField
+                      type="text"
+                      name="city"
+                      label="City"
+                      value={formData.city}
+                      onChange={handleInputChange}
+                      error={fieldErrors.city}
+                      placeholder="City"
+                      required
+                    />
+                    <SelectField
+                      name="state"
+                      label="State"
+                      value={formData.state}
+                      onChange={handleInputChange}
+                      error={fieldErrors.state}
+                      required
+                    >
+                      <option value="">State</option>
+                      {statesList.map(state => (
+                        <option key={state} value={state}>
+                          {state}
+                        </option>
+                      ))}
+                    </SelectField>
                   </div>
 
                   {/* Property Details */}
@@ -1106,17 +1120,17 @@ export default function HomeLLM() {
                   <button
                     onClick={handleGenerateEmail}
                     disabled={isGenerating}
-                    className="w-full py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 disabled:bg-gray-400 flex items-center justify-center gap-2 transition-colors"
+                    className="btn-primary w-full flex items-center justify-center gap-2"
                   >
                     {isGenerating ? (
                       <>
                         <Loader2 className="w-5 h-5 animate-spin" />
-                        Generating Email...
+                        <span>Generating Email...</span>
                       </>
                     ) : (
                       <>
-                        <Send className="w-5 h-5" />
-                        Generate Email
+                        <Sparkles className="w-5 h-5" />
+                        <span>Generate Email</span>
                       </>
                     )}
                   </button>
