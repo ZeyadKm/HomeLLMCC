@@ -410,6 +410,10 @@ export default function HomeLLM() {
   };
 
   const handleAnalyzeWaterReport = async () => {
+    // Clear previous errors
+    setError('');
+    setApiKeyError('');
+
     if (!waterReport) {
       setError('Please upload a water report first');
       return;
@@ -418,17 +422,18 @@ export default function HomeLLM() {
     const validation = API.validateApiKey(apiKey);
     if (!validation.valid) {
       setApiKeyError(validation.error);
+      setError('Invalid API key. Please check your Anthropic API key.');
       return;
     }
 
     setIsAnalyzingWater(true);
-    setError('');
     setWaterAnalysis(null);
 
     try {
       console.log('[Water Analysis] Starting analysis...');
       console.log('[Water Analysis] Document type:', waterReport.type);
       console.log('[Water Analysis] Document size:', waterReport.size);
+      console.log('[Water Analysis] Data URL length:', waterReport.data?.length);
       console.log('[Water Analysis] API key present:', !!apiKey);
 
       // Generate analysis prompt
@@ -440,31 +445,51 @@ export default function HomeLLM() {
       console.log('[Water Analysis] Prompt generated, length:', analysisPrompt.length);
 
       // Analyze the document with vision/PDF support
-      const systemPrompt = 'You are an expert water quality analyst with deep knowledge of EPA drinking water standards, state regulations, and health effects of water contaminants.';
+      const systemPromptText = 'You are an expert water quality analyst with deep knowledge of EPA drinking water standards, state regulations, and health effects of water contaminants.';
 
-      console.log('[Water Analysis] Calling API...');
+      console.log('[Water Analysis] Calling API endpoint...');
+      console.log('[Water Analysis] Endpoint:', '/api/analyze-document');
 
       // Claude API supports both images and PDFs
       const result = await API.analyzeDocument(
         apiKey,
-        systemPrompt,
+        systemPromptText,
         analysisPrompt,
         [waterReport] // Send document regardless of type
       );
 
-      console.log('[Water Analysis] API response received:', result.success);
+      console.log('[Water Analysis] API response received');
+      console.log('[Water Analysis] Success:', result.success);
+      console.log('[Water Analysis] Email length:', result.email?.length);
 
-      if (result.success) {
-        console.log('[Water Analysis] Analysis successful, length:', result.email?.length);
+      if (result.success && result.email) {
+        console.log('[Water Analysis] Analysis successful');
         setWaterAnalysis(result.email);
+        setError(''); // Clear any errors
       } else {
-        console.error('[Water Analysis] Analysis failed');
-        setError('Failed to analyze water report');
+        console.error('[Water Analysis] Analysis failed - no email in response');
+        setError('Analysis failed: No response received from API. Please try again.');
       }
     } catch (err) {
-      console.error('[Water Analysis] Error:', err);
+      console.error('[Water Analysis] Error occurred:', err);
+      console.error('[Water Analysis] Error message:', err.message);
       console.error('[Water Analysis] Error stack:', err.stack);
-      setError(err.message || 'An error occurred during analysis');
+
+      // Provide more specific error messages
+      let errorMessage = 'An error occurred during analysis';
+      if (err.message.includes('fetch')) {
+        errorMessage = 'Network error: Could not connect to analysis service. Please check your internet connection.';
+      } else if (err.message.includes('API key')) {
+        errorMessage = 'API key error: ' + err.message;
+      } else if (err.message.includes('401')) {
+        errorMessage = 'Authentication failed: Invalid API key. Please check your Anthropic API key.';
+      } else if (err.message.includes('429')) {
+        errorMessage = 'Rate limit exceeded: Please wait a moment and try again.';
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+
+      setError(errorMessage);
     } finally {
       setIsAnalyzingWater(false);
       console.log('[Water Analysis] Analysis complete');
@@ -1277,10 +1302,21 @@ export default function HomeLLM() {
 
               {/* Error Display */}
               {error && (
-                <div className={`mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg flex items-start gap-3 ${waterAnalysis ? 'mx-8 mt-8' : ''}`}>
-                  <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                  <p className="text-red-800">{error}</p>
-                </div>
+                <Alert
+                  type="error"
+                  onClose={() => setError('')}
+                  className={`mb-6 ${waterAnalysis ? 'mx-8 mt-8' : ''}`}
+                >
+                  <p className="font-medium">{error}</p>
+                </Alert>
+              )}
+
+              {/* API Key Warning */}
+              {!apiKey && !waterAnalysis && (
+                <Alert type="warning" className="mb-6">
+                  <p className="font-medium">API Key Required</p>
+                  <p className="text-sm mt-1">Please enter your Anthropic API key in the header above to use this feature.</p>
+                </Alert>
               )}
 
               {!waterAnalysis ? (
