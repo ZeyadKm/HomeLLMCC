@@ -1,9 +1,8 @@
 // API Integration Module for HomeLLM
 // Handles communication with Claude API for email generation and document analysis
 
-// Use Vite proxy to forward requests to Anthropic API (avoids CORS)
-const ANTHROPIC_API_URL = '/api/anthropic/v1/messages';
-const ANTHROPIC_VERSION = '2023-06-01';
+// Use serverless function for production deployment (works on Vercel)
+const SERVERLESS_API_URL = '/api/analyze-document';
 const MODEL = 'claude-sonnet-4-5-20250929'; // Claude Sonnet 4.5 - Latest model
 
 // Validate API key format
@@ -30,10 +29,9 @@ export async function generateEmail(apiKey, systemPrompt, userPrompt, images = [
     throw new Error(validation.error);
   }
 
-  // Build message content with text, images, and PDFs
-  const content = [];
+  // Prepare documents array for serverless function
+  const documents = [];
 
-  // Add documents (images or PDFs) first if any
   if (images && images.length > 0) {
     images.forEach((doc, index) => {
       console.log(`[API] Processing document ${index + 1}:`, {
@@ -42,73 +40,33 @@ export async function generateEmail(apiKey, systemPrompt, userPrompt, images = [
         hasData: !!doc.data
       });
 
-      // Extract base64 data from data URL
-      const base64Data = doc.data.split(',')[1];
-      const mediaType = doc.type || 'image/jpeg';
-
-      console.log(`[API] Base64 data length:`, base64Data?.length);
-      console.log(`[API] Media type:`, mediaType);
-
-      // Check if it's a PDF or image
-      if (mediaType === 'application/pdf') {
-        console.log('[API] Adding as PDF document');
-        content.push({
-          type: 'document',
-          source: {
-            type: 'base64',
-            media_type: 'application/pdf',
-            data: base64Data
-          }
-        });
-      } else {
-        console.log('[API] Adding as image');
-        content.push({
-          type: 'image',
-          source: {
-            type: 'base64',
-            media_type: mediaType,
-            data: base64Data
-          }
-        });
-      }
+      documents.push({
+        type: doc.type || 'image/jpeg',
+        data: doc.data // Full data URL with base64
+      });
     });
   }
 
-  // Add text prompt
-  content.push({
-    type: 'text',
-    text: userPrompt
-  });
-
-  console.log('[API] Content array length:', content.length);
-
+  // Build request for serverless function
   const requestBody = {
-    model: MODEL,
-    max_tokens: 4096,
-    temperature: 1,
-    system: systemPrompt,
-    messages: [
-      {
-        role: 'user',
-        content: content
-      }
-    ]
+    apiKey: apiKey,
+    systemPrompt: systemPrompt,
+    userPrompt: userPrompt,
+    documents: documents
   };
 
-  console.log('[API] Request body prepared, model:', MODEL);
+  console.log('[API] Request body prepared');
   console.log('[API] System prompt length:', systemPrompt?.length);
   console.log('[API] User prompt length:', userPrompt?.length);
+  console.log('[API] Documents count:', documents.length);
 
   try {
-    console.log('[API] Sending request to:', ANTHROPIC_API_URL);
+    console.log('[API] Sending request to:', SERVERLESS_API_URL);
 
-    const response = await fetch(ANTHROPIC_API_URL, {
+    const response = await fetch(SERVERLESS_API_URL, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': ANTHROPIC_VERSION,
-        'anthropic-dangerous-direct-browser-access': 'true'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify(requestBody)
     });
@@ -122,28 +80,28 @@ export async function generateEmail(apiKey, systemPrompt, userPrompt, images = [
       console.error('[API] Error response:', JSON.stringify(errorData, null, 2));
 
       if (response.status === 401) {
-        throw new Error(`Invalid API key: ${errorData.error?.message || 'Please check your Anthropic API key'}`);
+        throw new Error(`Invalid API key: ${errorData.error || 'Please check your Anthropic API key'}`);
       } else if (response.status === 429) {
         throw new Error('Rate limit exceeded. Please try again in a moment.');
       } else if (response.status === 400) {
-        throw new Error(`Bad request: ${errorData.error?.message || 'Invalid request parameters'}`);
+        throw new Error(`Bad request: ${errorData.error || 'Invalid request parameters'}`);
       } else {
-        throw new Error(`API error (${response.status}): ${errorData.error?.message || 'Unknown error'}`);
+        throw new Error(`API error (${response.status}): ${errorData.error || 'Unknown error'}`);
       }
     }
 
     const data = await response.json();
 
-    if (!data.content || !data.content[0] || !data.content[0].text) {
+    if (!data.success || !data.email) {
       throw new Error('Unexpected API response format');
     }
 
     return {
       success: true,
-      email: data.content[0].text,
+      email: data.email,
       usage: {
-        inputTokens: data.usage?.input_tokens || 0,
-        outputTokens: data.usage?.output_tokens || 0
+        inputTokens: data.usage?.inputTokens || 0,
+        outputTokens: data.usage?.outputTokens || 0
       }
     };
   } catch (error) {

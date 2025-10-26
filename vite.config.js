@@ -5,14 +5,15 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      // Proxy requests directly to Anthropic API
-      '/api/anthropic': {
-        target: 'https://api.anthropic.com',
+      // Proxy API requests to local Express server during development
+      // In production, Vercel routes /api/* to serverless functions
+      '/api': {
+        target: 'http://localhost:3000',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/anthropic/, ''),
         configure: (proxy, _options) => {
           proxy.on('error', (err, _req, _res) => {
             console.log('[Proxy] Error:', err);
+            console.log('[Proxy] Make sure the API server is running: node server.js');
           });
           proxy.on('proxyReq', (proxyReq, req, _res) => {
             console.log('[Proxy] Request:', req.method, req.url);
