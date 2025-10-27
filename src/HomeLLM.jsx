@@ -554,7 +554,7 @@ export default function HomeLLM() {
               margin: 40px auto;
               padding: 20px;
             }
-            h1 { color: #2563eb; border-bottom: 2px solid #2563eb; padding-bottom: 10px; }
+            h1 { color: #f58b44; border-bottom: 2px solid #f58b44; padding-bottom: 10px; }
             h2 { color: #4b5563; margin-top: 30px; }
             .header { text-align: center; margin-bottom: 40px; }
             .footer { margin-top: 60px; padding-top: 20px; border-top: 1px solid #ccc; text-align: center; color: #666; font-size: 12px; }
@@ -580,18 +580,18 @@ export default function HomeLLM() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-teal-50 to-green-50 p-4">
+    <div className="min-h-screen bg-headspace-cream p-4">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-teal-600 rounded-xl shadow-2xl p-8 mb-6 text-white">
+        <div className="bg-gradient-to-r from-headspace-orange to-headspace-orange-dark rounded-xl shadow-2xl p-8 mb-6 text-white">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-4xl font-bold flex items-center gap-3">
                 <Shield className="w-10 h-10" />
                 HomeLLM
               </h1>
-              <p className="text-blue-100 mt-2 text-lg">AI-Powered Home Health Advocacy Platform</p>
-              <p className="text-blue-200 text-sm mt-1">Empowering residents with data-driven advocacy tools</p>
+              <p className="text-orange-100 mt-2 text-lg">AI-Powered Home Health Advocacy Platform</p>
+              <p className="text-orange-50 text-sm mt-1">Empowering residents with data-driven advocacy tools</p>
             </div>
           </div>
 
@@ -623,19 +623,19 @@ export default function HomeLLM() {
               {apiKeyError && (
                 <p className="mt-2 text-sm text-red-200 bg-red-500/20 rounded px-3 py-1">{apiKeyError}</p>
               )}
-              <p className="mt-2 text-sm text-blue-100">
+              <p className="mt-2 text-sm text-orange-100">
                 Get your API key from <a href="https://console.anthropic.com/" target="_blank" rel="noopener noreferrer" className="text-white font-semibold hover:underline">console.anthropic.com</a>
               </p>
             </div>
           ) : (
             <div className="mt-4 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-green-100">
+              <div className="flex items-center gap-2 text-white">
                 <CheckCircle className="w-5 h-5" />
                 <span className="text-sm font-medium">API Key Connected</span>
               </div>
               <button
                 onClick={() => setApiKey('')}
-                className="text-xs text-blue-100 hover:text-white underline transition-colors"
+                className="text-xs text-orange-100 hover:text-white underline transition-colors"
               >
                 Change API Key
               </button>
@@ -651,8 +651,8 @@ export default function HomeLLM() {
                 onClick={() => setActiveTab('email')}
                 className={`flex items-center gap-2 px-5 py-3 rounded-lg font-semibold transition-all ${
                   activeTab === 'email'
-                    ? 'bg-gradient-to-r from-blue-600 to-teal-600 text-white shadow-md transform scale-105'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'
+                    ? 'bg-gradient-to-r from-headspace-orange to-headspace-orange-dark text-white shadow-md transform scale-105'
+                    : 'text-headspace-slate hover:bg-gray-100 hover:text-gray-800'
                 }`}
               >
                 <Mail className="w-5 h-5" />
@@ -662,8 +662,8 @@ export default function HomeLLM() {
                 onClick={() => setActiveTab('water')}
                 className={`flex items-center gap-2 px-5 py-3 rounded-lg font-semibold transition-all ${
                   activeTab === 'water'
-                    ? 'bg-gradient-to-r from-blue-600 to-teal-600 text-white shadow-md transform scale-105'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'
+                    ? 'bg-gradient-to-r from-headspace-orange to-headspace-orange-dark text-white shadow-md transform scale-105'
+                    : 'text-headspace-slate hover:bg-gray-100 hover:text-gray-800'
                 }`}
               >
                 <Droplet className="w-5 h-5" />
@@ -673,8 +673,8 @@ export default function HomeLLM() {
                 onClick={() => setActiveTab('warranty')}
                 className={`flex items-center gap-2 px-5 py-3 rounded-lg font-semibold transition-all ${
                   activeTab === 'warranty'
-                    ? 'bg-gradient-to-r from-blue-600 to-teal-600 text-white shadow-md transform scale-105'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'
+                    ? 'bg-gradient-to-r from-headspace-orange to-headspace-orange-dark text-white shadow-md transform scale-105'
+                    : 'text-headspace-slate hover:bg-gray-100 hover:text-gray-800'
                 }`}
               >
                 <FileCheck className="w-5 h-5" />
@@ -684,8 +684,8 @@ export default function HomeLLM() {
                 onClick={() => setActiveTab('drafts')}
                 className={`flex items-center gap-2 px-5 py-3 rounded-lg font-semibold transition-all ${
                   activeTab === 'drafts'
-                    ? 'bg-gradient-to-r from-blue-600 to-teal-600 text-white shadow-md transform scale-105'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'
+                    ? 'bg-gradient-to-r from-headspace-orange to-headspace-orange-dark text-white shadow-md transform scale-105'
+                    : 'text-headspace-slate hover:bg-gray-100 hover:text-gray-800'
                 }`}
               >
                 <Clock className="w-5 h-5" />
@@ -1106,7 +1106,7 @@ export default function HomeLLM() {
                   <button
                     onClick={handleGenerateEmail}
                     disabled={isGenerating}
-                    className="w-full py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 disabled:bg-gray-400 flex items-center justify-center gap-2 transition-colors"
+                    className="w-full py-3 bg-gradient-to-r from-headspace-orange to-headspace-orange-dark text-white rounded-lg font-medium hover:from-headspace-orange-dark hover:to-headspace-orange disabled:bg-gray-400 flex items-center justify-center gap-2 transition-colors shadow-lg"
                   >
                     {isGenerating ? (
                       <>
@@ -1253,8 +1253,8 @@ export default function HomeLLM() {
             <div className={waterAnalysis ? '' : 'p-8'}>
               {!waterAnalysis && (
                 <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-gray-800 mb-2 flex items-center gap-2">
-                    <Droplet className="w-7 h-7 text-blue-600" />
+                  <h2 className="text-2xl font-bold text-headspace-slate mb-2 flex items-center gap-2">
+                    <Droplet className="w-7 h-7 text-headspace-blue" />
                     Water Quality Report Analysis
                   </h2>
                   <p className="text-gray-600">Upload your water quality report for comprehensive EPA standards analysis</p>
@@ -1272,10 +1272,10 @@ export default function HomeLLM() {
               {!waterAnalysis ? (
                 <div className="grid md:grid-cols-2 gap-8">
                   <div className="space-y-4">
-                    <div className="border-2 border-dashed border-blue-300 rounded-xl p-8 bg-blue-50/50 hover:bg-blue-50 transition-colors">
+                    <div className="border-2 border-dashed border-headspace-orange rounded-xl p-8 bg-headspace-cream hover:bg-orange-50 transition-colors">
                       <label className="block text-center cursor-pointer">
-                        <Upload className="w-12 h-12 text-blue-600 mx-auto mb-3" />
-                        <span className="block text-lg font-semibold text-gray-800 mb-1">
+                        <Upload className="w-12 h-12 text-headspace-orange mx-auto mb-3" />
+                        <span className="block text-lg font-semibold text-headspace-slate mb-1">
                           Upload Water Quality Report
                         </span>
                         <span className="block text-sm text-gray-600 mb-4">
@@ -1287,7 +1287,7 @@ export default function HomeLLM() {
                           onChange={handleWaterReportUpload}
                           className="hidden"
                         />
-                        <span className="inline-block px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                        <span className="inline-block px-6 py-2 bg-gradient-to-r from-headspace-orange to-headspace-orange-dark text-white rounded-lg hover:from-headspace-orange-dark hover:to-headspace-orange transition-colors font-medium shadow-md">
                           Choose File
                         </span>
                       </label>
@@ -1312,7 +1312,7 @@ export default function HomeLLM() {
                     <button
                       onClick={handleAnalyzeWaterReport}
                       disabled={!waterReport || isAnalyzingWater}
-                      className="w-full py-4 bg-gradient-to-r from-blue-600 to-teal-600 text-white rounded-xl hover:from-blue-700 hover:to-teal-700 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-3 font-semibold text-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02] disabled:transform-none"
+                      className="w-full py-4 bg-gradient-to-r from-headspace-orange to-headspace-orange-dark text-white rounded-xl hover:from-headspace-orange-dark hover:to-headspace-orange disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-3 font-semibold text-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02] disabled:transform-none"
                     >
                       {isAnalyzingWater ? (
                         <>
@@ -1327,12 +1327,12 @@ export default function HomeLLM() {
                       )}
                     </button>
 
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <h3 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
-                        <Info className="w-5 h-5" />
+                    <div className="bg-headspace-cream border border-headspace-orange/30 rounded-lg p-4">
+                      <h3 className="font-semibold text-headspace-slate mb-2 flex items-center gap-2">
+                        <Info className="w-5 h-5 text-headspace-blue" />
                         What We Analyze
                       </h3>
-                      <ul className="text-sm text-blue-800 space-y-1">
+                      <ul className="text-sm text-headspace-slate space-y-1">
                         <li>• Contaminant levels vs EPA standards</li>
                         <li>• Health risk assessment</li>
                         <li>• Vulnerable population impacts</li>
@@ -1486,9 +1486,9 @@ export default function HomeLLM() {
 
         {/* Footer */}
         <div className="mt-8 text-center">
-          <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-200">
-            <p className="text-gray-700 font-medium">
-              HomeLLM - Powered by <span className="text-blue-600 font-semibold">Claude AI</span>
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-headspace-orange/20">
+            <p className="text-headspace-slate font-medium">
+              HomeLLM - Powered by <span className="text-headspace-orange font-semibold">Claude AI</span>
             </p>
             <p className="text-gray-600 text-sm mt-2">
               Empowering residents with data-driven advocacy tools for home health and environmental safety
