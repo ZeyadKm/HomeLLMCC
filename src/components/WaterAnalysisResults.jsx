@@ -226,10 +226,10 @@ export default function WaterAnalysisResults({ analysis, onExport, onPrint, onUs
   return (
     <div className="space-y-8">
       {/* Header - Full width with actions */}
-      <div className="flex justify-between items-start pb-6 border-b-2 border-blue-300 relative">
+      <div className="flex justify-between items-start pb-6 border-b-2 border-headspace-orange relative">
         <div className="flex-1">
-          <h3 className="text-3xl font-bold text-gray-900 flex items-center gap-3 mb-3">
-            <div className="p-2 bg-gradient-to-br from-blue-500 to-teal-500 rounded-xl shadow-lg">
+          <h3 className="text-3xl font-bold text-headspace-slate flex items-center gap-3 mb-3">
+            <div className="p-2 bg-gradient-to-br from-headspace-orange to-headspace-orange-dark rounded-xl shadow-lg">
               <Droplet className="w-8 h-8 text-white" />
             </div>
             Water Quality Results
@@ -263,9 +263,9 @@ export default function WaterAnalysisResults({ analysis, onExport, onPrint, onUs
         <div className="space-y-7">
           {/* Overall Assessment */}
           {sections.overallAssessment && (
-            <div className="group bg-gradient-to-br from-blue-50 to-blue-100/50 border-l-4 border-blue-500 p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
-              <h4 className="font-bold text-blue-900 mb-3 text-xl flex items-center gap-3">
-                <div className="p-2 bg-blue-500 rounded-lg group-hover:scale-110 transition-transform">
+            <div className="group bg-gradient-to-br from-headspace-cream to-orange-50 border-l-4 border-headspace-blue p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+              <h4 className="font-bold text-headspace-slate mb-3 text-xl flex items-center gap-3">
+                <div className="p-2 bg-headspace-blue rounded-lg group-hover:scale-110 transition-transform">
                   <FileText className="w-5 h-5 text-white" />
                 </div>
                 Overall Assessment
@@ -317,8 +317,8 @@ export default function WaterAnalysisResults({ analysis, onExport, onPrint, onUs
           {/* Detected Contaminants - Grid Layout for better space usage */}
           {sections.detectedContaminants.length > 0 && (
             <div>
-              <h4 className="font-bold text-gray-900 mb-5 text-2xl flex items-center gap-3">
-                <div className="p-2.5 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl shadow-lg">
+              <h4 className="font-bold text-headspace-slate mb-5 text-2xl flex items-center gap-3">
+                <div className="p-2.5 bg-gradient-to-br from-headspace-blue to-blue-600 rounded-xl shadow-lg">
                   <Shield className="w-6 h-6 text-white" />
                 </div>
                 Detected Contaminants ({sections.detectedContaminants.length})
@@ -363,8 +363,8 @@ export default function WaterAnalysisResults({ analysis, onExport, onPrint, onUs
           {/* Filter Recommendations - Grid Layout */}
           {sections.filterRecommendations.length > 0 && (
             <div>
-              <h4 className="font-bold text-gray-900 mb-5 text-2xl flex items-center gap-3">
-                <div className="p-2.5 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl shadow-lg">
+              <h4 className="font-bold text-headspace-slate mb-5 text-2xl flex items-center gap-3">
+                <div className="p-2.5 bg-gradient-to-br from-headspace-orange to-headspace-orange-dark rounded-xl shadow-lg">
                   <Droplet className="w-6 h-6 text-white" />
                 </div>
                 Filter Recommendations ({sections.filterRecommendations.length})
@@ -393,9 +393,9 @@ export default function WaterAnalysisResults({ analysis, onExport, onPrint, onUs
 
           {/* Recommended Actions */}
           {sections.recommendedActions.length > 0 && (
-            <div className="group bg-gradient-to-br from-purple-50 to-purple-100/50 border-l-4 border-purple-500 p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
-              <h4 className="font-bold text-purple-900 mb-4 text-xl flex items-center gap-3">
-                <div className="p-2 bg-purple-500 rounded-lg group-hover:scale-110 transition-transform">
+            <div className="group bg-gradient-to-br from-orange-50 to-orange-100/50 border-l-4 border-headspace-orange p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+              <h4 className="font-bold text-headspace-slate mb-4 text-xl flex items-center gap-3">
+                <div className="p-2 bg-headspace-orange rounded-lg group-hover:scale-110 transition-transform">
                   <CheckCircle className="w-5 h-5 text-white" />
                 </div>
                 Recommended Actions ({sections.recommendedActions.length})
@@ -403,7 +403,7 @@ export default function WaterAnalysisResults({ analysis, onExport, onPrint, onUs
               <ol className="space-y-3">
                 {sections.recommendedActions.map((action, idx) => (
                   <li key={idx} className="text-gray-800 flex items-start gap-4 p-3 bg-white/60 rounded-lg hover:bg-white/80 transition-colors">
-                    <span className="font-bold text-purple-600 text-xl min-w-[2rem] flex items-center justify-center h-8 w-8 bg-purple-100 rounded-lg">{idx + 1}</span>
+                    <span className="font-bold text-headspace-orange text-xl min-w-[2rem] flex items-center justify-center h-8 w-8 bg-orange-100 rounded-lg">{idx + 1}</span>
                     <span className="flex-1 pt-1.5 leading-relaxed">{action}</span>
                   </li>
                 ))}
@@ -413,9 +413,9 @@ export default function WaterAnalysisResults({ analysis, onExport, onPrint, onUs
 
           {/* Assistance Programs */}
           {sections.assistancePrograms.length > 0 && (
-            <div className="group bg-gradient-to-br from-blue-50 to-blue-100/50 border-l-4 border-blue-500 p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
-              <h4 className="font-bold text-blue-900 mb-4 text-xl flex items-center gap-3">
-                <div className="p-2 bg-blue-500 rounded-lg group-hover:scale-110 transition-transform">
+            <div className="group bg-gradient-to-br from-headspace-cream to-sky-50 border-l-4 border-headspace-blue p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+              <h4 className="font-bold text-headspace-slate mb-4 text-xl flex items-center gap-3">
+                <div className="p-2 bg-headspace-blue rounded-lg group-hover:scale-110 transition-transform">
                   <FileText className="w-5 h-5 text-white" />
                 </div>
                 Assistance Programs ({sections.assistancePrograms.length})
@@ -423,7 +423,7 @@ export default function WaterAnalysisResults({ analysis, onExport, onPrint, onUs
               <ul className="space-y-3">
                 {sections.assistancePrograms.map((program, idx) => (
                   <li key={idx} className="text-gray-800 flex items-start gap-3 p-3 bg-white/60 rounded-lg hover:bg-white/80 transition-colors">
-                    <span className="text-blue-600 font-bold text-lg mt-0.5">•</span>
+                    <span className="text-headspace-blue font-bold text-lg mt-0.5">•</span>
                     <span className="flex-1 leading-relaxed">{program}</span>
                   </li>
                 ))}
@@ -444,7 +444,7 @@ export default function WaterAnalysisResults({ analysis, onExport, onPrint, onUs
       <div className="pt-6 border-t-2 border-gray-300 mt-2">
         <button
           onClick={onUseInEmail}
-          className="group w-full py-5 bg-gradient-to-r from-blue-600 via-indigo-600 to-teal-600 text-white rounded-2xl hover:from-blue-700 hover:via-indigo-700 hover:to-teal-700 flex items-center justify-center gap-3 transition-all font-bold text-lg shadow-xl hover:shadow-2xl transform hover:scale-[1.02] relative overflow-hidden"
+          className="group w-full py-5 bg-gradient-to-r from-headspace-orange via-headspace-orange-dark to-headspace-orange text-white rounded-2xl hover:from-headspace-orange-dark hover:via-headspace-orange hover:to-headspace-orange-dark flex items-center justify-center gap-3 transition-all font-bold text-lg shadow-xl hover:shadow-2xl transform hover:scale-[1.02] relative overflow-hidden"
         >
           <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
           <FileText className="w-6 h-6 relative z-10 group-hover:scale-110 transition-transform" />
