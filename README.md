@@ -386,3 +386,4 @@ If HomeLLM helps you or your customers, please star the repo!
 - **Issue Types**: 11 categories
 - **Recipient Types**: 7 organizations
 - **Estimated Customer Value**: $2,000-10,000/year
+
