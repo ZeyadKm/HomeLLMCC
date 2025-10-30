@@ -8,14 +8,29 @@ import * as API from './api-integration';
 export const benefitsCategories = {
   homeWarranty: {
     commonProviders: [
-      'American Home Shield', 'Choice Home Warranty', 'Select Home Warranty',
-      'Total Home Protection', 'Cinch Home Services', 'First American Home Warranty',
-      'Old Republic Home Protection', 'Liberty Home Guard', '2-10 Home Buyers Warranty'
+      'American Home Shield',
+      'Choice Home Warranty',
+      'Select Home Warranty',
+      'Total Home Protection',
+      'Cinch Home Services',
+      'First American Home Warranty',
+      'Old Republic Home Protection',
+      'Liberty Home Guard',
+      '2-10 Home Buyers Warranty',
     ],
     commonCoverage: [
-      'HVAC systems', 'Plumbing', 'Electrical', 'Appliances', 'Water heater',
-      'Garage door opener', 'Ceiling fans', 'Built-in microwave', 'Dishwasher',
-      'Oven/range', 'Refrigerator', 'Washer/dryer'
+      'HVAC systems',
+      'Plumbing',
+      'Electrical',
+      'Appliances',
+      'Water heater',
+      'Garage door opener',
+      'Ceiling fans',
+      'Built-in microwave',
+      'Dishwasher',
+      'Oven/range',
+      'Refrigerator',
+      'Washer/dryer',
     ],
     oftenMissed: [
       'Annual HVAC tune-up (often included but unused)',
@@ -24,8 +39,8 @@ export const benefitsCategories = {
       'Code violation coverage',
       'Permit fee reimbursement',
       'Home energy audit',
-      'Smart home device coverage'
-    ]
+      'Smart home device coverage',
+    ],
   },
   homeInsurance: {
     oftenMissed: [
@@ -40,12 +55,18 @@ export const benefitsCategories = {
       'Refrigerated food spoilage',
       'Tree removal after storm',
       'Loss assessment (condo/HOA)',
-      'Replacement cost vs actual cash value'
+      'Replacement cost vs actual cash value',
     ],
     claimTriggers: [
-      'Water heater leak', 'Pipe burst', 'Roof leak', 'Appliance failure',
-      'Storm damage', 'Theft', 'Vandalism', 'Fire/smoke'
-    ]
+      'Water heater leak',
+      'Pipe burst',
+      'Roof leak',
+      'Appliance failure',
+      'Storm damage',
+      'Theft',
+      'Vandalism',
+      'Fire/smoke',
+    ],
   },
   healthInsurance: {
     homeHealthBenefits: [
@@ -60,8 +81,8 @@ export const benefitsCategories = {
       'Environmental illness evaluation',
       'Indoor air quality assessment (with diagnosis)',
       'Water filtration (with medical necessity)',
-      'Lead poisoning testing and treatment'
-    ]
+      'Lead poisoning testing and treatment',
+    ],
   },
   government: {
     federal: [
@@ -72,7 +93,7 @@ export const benefitsCategories = {
       'USDA Rural Development Housing Repair Loans',
       'VA Home Improvement Grants',
       'Energy Efficiency Tax Credits (IRA)',
-      'Residential Clean Energy Credit (Solar, etc.)'
+      'Residential Clean Energy Credit (Solar, etc.)',
     ],
     state: [
       'State weatherization programs',
@@ -81,15 +102,15 @@ export const benefitsCategories = {
       'Water conservation rebates',
       'Lead abatement assistance',
       'Radon mitigation grants',
-      'Home accessibility modifications'
+      'Home accessibility modifications',
     ],
     local: [
       'Municipal utility rebates',
       'Property tax exemptions (senior, veteran, disability)',
       'Housing rehabilitation programs',
       'First-time homebuyer assistance',
-      'Historic home preservation grants'
-    ]
+      'Historic home preservation grants',
+    ],
   },
   hoaFees: {
     oftenMissed: [
@@ -105,8 +126,8 @@ export const benefitsCategories = {
       'Reserve fund (for major repairs)',
       'Clubhouse/amenity rental',
       'Dispute resolution',
-      'Parking space allocation'
-    ]
+      'Parking space allocation',
+    ],
   },
   manufacturer: {
     warranties: [
@@ -116,16 +137,16 @@ export const benefitsCategories = {
       'Roof warranties (10-50 years)',
       'Window warranties (10-20 years)',
       'Siding warranties (lifetime)',
-      'Extended warranties on electronics'
+      'Extended warranties on electronics',
     ],
     recalls: [
       'CPSC product recalls',
       'Appliance recalls',
       'HVAC system recalls',
       'Water heater recalls',
-      'Smoke detector recalls'
-    ]
-  }
+      'Smoke detector recalls',
+    ],
+  },
 };
 
 // Analyze home warranty coverage and find unused benefits
@@ -191,16 +212,21 @@ What free or discounted maintenance should customer request:
 Provide specific, actionable recommendations.`;
 
   try {
-    const result = await API.generateEmail(apiKey, systemPrompt, userPrompt, warrantyDocument ? [warrantyDocument] : []);
+    const result = await API.generateEmail(
+      apiKey,
+      systemPrompt,
+      userPrompt,
+      warrantyDocument ? [warrantyDocument] : []
+    );
     return {
       success: true,
       analysis: result.email,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   } catch (error) {
     return {
       success: false,
-      error: error.message
+      error: error.message,
     };
   }
 }
@@ -285,22 +311,31 @@ Based on common home issues:
 Provide specific guidance and claim potential estimates.`;
 
   try {
-    const result = await API.generateEmail(apiKey, systemPrompt, userPrompt, policyDocument ? [policyDocument] : []);
+    const result = await API.generateEmail(
+      apiKey,
+      systemPrompt,
+      userPrompt,
+      policyDocument ? [policyDocument] : []
+    );
     return {
       success: true,
       analysis: result.email,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   } catch (error) {
     return {
       success: false,
-      error: error.message
+      error: error.message,
     };
   }
 }
 
 // Discover health insurance benefits related to home health
-export async function analyzeHealthInsuranceBenefits(apiKey, healthCondition, homeEnvironmentIssue) {
+export async function analyzeHealthInsuranceBenefits(
+  apiKey,
+  healthCondition,
+  homeEnvironmentIssue
+) {
   const systemPrompt = `You are a healthcare benefits specialist and environmental health expert. You know how to connect home environmental issues to health insurance benefits.`;
 
   const userPrompt = `Identify health insurance benefits related to this home health situation:
@@ -370,12 +405,12 @@ Provide specific CPT codes, ICD-10 codes, and insurance terminology.`;
     return {
       success: true,
       benefits: result.email,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   } catch (error) {
     return {
       success: false,
-      error: error.message
+      error: error.message,
     };
   }
 }
@@ -393,7 +428,7 @@ export async function findGovernmentPrograms(apiKey, customerProfile) {
     veteranStatus,
     seniorStatus,
     disabilityStatus,
-    homeIssue
+    homeIssue,
   } = customerProfile;
 
   const systemPrompt = `You are an expert in government assistance programs, grants, and subsidies. You know how to match people with programs they qualify for but don't know about.`;
@@ -478,12 +513,12 @@ Provide comprehensive list with specific contact info.`;
     return {
       success: true,
       programs: result.email,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   } catch (error) {
     return {
       success: false,
-      error: error.message
+      error: error.message,
     };
   }
 }
@@ -571,16 +606,21 @@ Services to request from HOA:
 Provide specific dollar value estimates where possible.`;
 
   try {
-    const result = await API.generateEmail(apiKey, systemPrompt, userPrompt, hoaDocuments ? [hoaDocuments] : []);
+    const result = await API.generateEmail(
+      apiKey,
+      systemPrompt,
+      userPrompt,
+      hoaDocuments ? [hoaDocuments] : []
+    );
     return {
       success: true,
       analysis: result.email,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   } catch (error) {
     return {
       success: false,
-      error: error.message
+      error: error.message,
     };
   }
 }
@@ -631,12 +671,12 @@ Provide specific recall information if known, or guidance on checking.`;
     return {
       success: true,
       recalls: result.email,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   } catch (error) {
     return {
       success: false,
-      error: error.message
+      error: error.message,
     };
   }
 }
@@ -651,7 +691,7 @@ export async function generateBenefitsAuditReport(apiKey, customerData) {
     hoaBenefits: null,
     productRecalls: null,
     estimatedAnnualValue: 0,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   };
 
   try {
@@ -701,13 +741,13 @@ export async function generateBenefitsAuditReport(apiKey, customerData) {
 
     return {
       success: true,
-      results: results
+      results: results,
     };
   } catch (error) {
     return {
       success: false,
       error: error.message,
-      partialResults: results
+      partialResults: results,
     };
   }
 }
@@ -720,5 +760,5 @@ export default {
   analyzeHOABenefits,
   checkProductRecalls,
   generateBenefitsAuditReport,
-  benefitsCategories
+  benefitsCategories,
 };

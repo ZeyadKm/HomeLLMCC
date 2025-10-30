@@ -1,4 +1,13 @@
-import { Download, Printer, Droplet, Shield, AlertTriangle, CheckCircle, AlertCircle, FileText } from 'lucide-react';
+import {
+  Download,
+  Printer,
+  Droplet,
+  Shield,
+  AlertTriangle,
+  CheckCircle,
+  AlertCircle,
+  FileText,
+} from 'lucide-react';
 
 /**
  * WaterAnalysisResults Component - Optimized for maximum screen space usage
@@ -39,22 +48,26 @@ export default function WaterAnalysisResults({ analysis, onExport, onPrint, onUs
       assistancePrograms: [],
       disclaimer: '',
       regulatoryCitations: [],
-      rawText: cleanText
+      rawText: cleanText,
     };
 
     // Parse Overall Assessment
-    const overallMatch = cleanText.match(/OVERALL ASSESSMENT:(.*?)(?=EPA VIOLATIONS:|AREAS OF CONCERN:|DETECTED CONTAMINANTS|$)/is);
+    const overallMatch = cleanText.match(
+      /OVERALL ASSESSMENT:(.*?)(?=EPA VIOLATIONS:|AREAS OF CONCERN:|DETECTED CONTAMINANTS|$)/is
+    );
     if (overallMatch) {
       sections.overallAssessment = overallMatch[1].trim();
     }
 
     // Parse EPA Violations
-    const violationsMatch = cleanText.match(/EPA VIOLATIONS:(.*?)(?=AREAS OF CONCERN:|DETECTED CONTAMINANTS|$)/is);
+    const violationsMatch = cleanText.match(
+      /EPA VIOLATIONS:(.*?)(?=AREAS OF CONCERN:|DETECTED CONTAMINANTS|$)/is
+    );
     if (violationsMatch) {
       sections.epaViolations = violationsMatch[1]
         .split('\n')
-        .filter(line => line.trim() && (line.includes('•') || line.includes('-')))
-        .map(line => line.replace(/^[•\-]\s*/, '').trim());
+        .filter((line) => line.trim() && (line.includes('•') || line.includes('-')))
+        .map((line) => line.replace(/^[•\-]\s*/, '').trim());
     }
 
     // Parse Areas of Concern
@@ -62,12 +75,16 @@ export default function WaterAnalysisResults({ analysis, onExport, onPrint, onUs
     if (concernsMatch) {
       sections.areasOfConcern = concernsMatch[1]
         .split('\n')
-        .filter(line => line.trim() && (line.includes('•') || line.includes('-') || line.includes(':')))
-        .map(line => line.replace(/^[•\-]\s*/, '').trim());
+        .filter(
+          (line) => line.trim() && (line.includes('•') || line.includes('-') || line.includes(':'))
+        )
+        .map((line) => line.replace(/^[•\-]\s*/, '').trim());
     }
 
     // Parse Detected Contaminants
-    const contaminantsMatch = cleanText.match(/DETECTED CONTAMINANTS[^:]*:\s*(.*?)(?=\n\s*(?:FILTER RECOMMENDATIONS|RECOMMENDED ACTIONS|ASSISTANCE PROGRAMS|DISCLAIMER)|$)/is);
+    const contaminantsMatch = cleanText.match(
+      /DETECTED CONTAMINANTS[^:]*:\s*(.*?)(?=\n\s*(?:FILTER RECOMMENDATIONS|RECOMMENDED ACTIONS|ASSISTANCE PROGRAMS|DISCLAIMER)|$)/is
+    );
     if (contaminantsMatch) {
       const contaminantText = contaminantsMatch[1];
       const blocks = contaminantText.split(/\n---\n|\n\nCONTAMINANT:/);
@@ -88,19 +105,21 @@ export default function WaterAnalysisResults({ analysis, onExport, onPrint, onUs
             detected: detectedMatch ? detectedMatch[1].trim() : '',
             epaLimit: limitMatch ? limitMatch[1].trim() : '',
             healthEffects: healthMatch ? healthMatch[1].trim() : '',
-            severity: severityMatch ? severityMatch[1].toUpperCase() : 'MEDIUM'
+            severity: severityMatch ? severityMatch[1].toUpperCase() : 'MEDIUM',
           });
         }
       });
     }
 
     // Parse Filter Recommendations
-    const filterMatch = cleanText.match(/FILTER RECOMMENDATIONS[:\s]+(.*?)(?=\n\s*(?:RECOMMENDED ACTIONS|ASSISTANCE PROGRAMS|DISCLAIMER|REGULATORY CITATIONS)|$)/is);
+    const filterMatch = cleanText.match(
+      /FILTER RECOMMENDATIONS[:\s]+(.*?)(?=\n\s*(?:RECOMMENDED ACTIONS|ASSISTANCE PROGRAMS|DISCLAIMER|REGULATORY CITATIONS)|$)/is
+    );
     if (filterMatch) {
       const filterText = filterMatch[1];
       const filterBlocks = filterText.split(/\n\n+/);
 
-      filterBlocks.forEach(block => {
+      filterBlocks.forEach((block) => {
         if (!block.trim() || block.length < 20) return;
 
         const arrowMatch = block.match(/^(.+?)\s*(?:->|→|>=|=>)\s*(.+?)$/m);
@@ -110,38 +129,52 @@ export default function WaterAnalysisResults({ analysis, onExport, onPrint, onUs
 
           const lines = block.split('\n');
           const descLine = lines.find((line, idx) => idx > 0 && !line.startsWith('Cost:'));
-          const costLine = lines.find(line => line.startsWith('Cost:'));
+          const costLine = lines.find((line) => line.startsWith('Cost:'));
 
           sections.filterRecommendations.push({
             contaminant,
             filterType,
             description: descLine ? descLine.trim() : '',
-            cost: costLine ? costLine.replace('Cost:', '').trim() : ''
+            cost: costLine ? costLine.replace('Cost:', '').trim() : '',
           });
         }
       });
     }
 
     // Parse Recommended Actions
-    const actionsMatch = cleanText.match(/RECOMMENDED ACTIONS[:\s]+(.*?)(?=\n\s*(?:ASSISTANCE PROGRAMS|DISCLAIMER|REGULATORY CITATIONS)|$)/is);
+    const actionsMatch = cleanText.match(
+      /RECOMMENDED ACTIONS[:\s]+(.*?)(?=\n\s*(?:ASSISTANCE PROGRAMS|DISCLAIMER|REGULATORY CITATIONS)|$)/is
+    );
     if (actionsMatch) {
       const actionLines = actionsMatch[1]
         .split('\n')
-        .map(line => line.trim())
-        .filter(line => line && (/^\d+[\.\)]\s/.test(line) || /^\d+\s*[-–—]\s/.test(line)))
-        .map(line => line.replace(/^\d+[\.\)]\s*/, '').replace(/^\d+\s*[-–—]\s*/, '').trim());
+        .map((line) => line.trim())
+        .filter((line) => line && (/^\d+[\.\)]\s/.test(line) || /^\d+\s*[-–—]\s/.test(line)))
+        .map((line) =>
+          line
+            .replace(/^\d+[\.\)]\s*/, '')
+            .replace(/^\d+\s*[-–—]\s*/, '')
+            .trim()
+        );
 
       sections.recommendedActions = actionLines;
     }
 
     // Parse Assistance Programs
-    const programsMatch = cleanText.match(/ASSISTANCE PROGRAMS[:\s]+(.*?)(?=\n\s*(?:DISCLAIMER|REGULATORY CITATIONS)|$)/is);
+    const programsMatch = cleanText.match(
+      /ASSISTANCE PROGRAMS[:\s]+(.*?)(?=\n\s*(?:DISCLAIMER|REGULATORY CITATIONS)|$)/is
+    );
     if (programsMatch) {
       const programLines = programsMatch[1]
         .split('\n')
-        .map(line => line.trim())
-        .filter(line => line && (/^[-•*]\s/.test(line) || /^\d+[\.\)]\s/.test(line)))
-        .map(line => line.replace(/^[-•*]\s*/, '').replace(/^\d+[\.\)]\s*/, '').trim());
+        .map((line) => line.trim())
+        .filter((line) => line && (/^[-•*]\s/.test(line) || /^\d+[\.\)]\s/.test(line)))
+        .map((line) =>
+          line
+            .replace(/^[-•*]\s*/, '')
+            .replace(/^\d+[\.\)]\s*/, '')
+            .trim()
+        );
 
       sections.assistancePrograms = programLines;
     }
@@ -158,22 +191,25 @@ export default function WaterAnalysisResults({ analysis, onExport, onPrint, onUs
         status: 'POOR',
         color: 'text-red-600',
         bg: 'bg-red-50',
-        icon: AlertTriangle
+        icon: AlertTriangle,
       };
     }
-    if (sections.areasOfConcern.length > 0 || sections.detectedContaminants.some(c => c.severity === 'HIGH')) {
+    if (
+      sections.areasOfConcern.length > 0 ||
+      sections.detectedContaminants.some((c) => c.severity === 'HIGH')
+    ) {
       return {
         status: 'FAIR',
         color: 'text-yellow-600',
         bg: 'bg-yellow-50',
-        icon: AlertCircle
+        icon: AlertCircle,
       };
     }
     return {
       status: 'GOOD',
       color: 'text-green-600',
       bg: 'bg-green-50',
-      icon: CheckCircle
+      icon: CheckCircle,
     };
   };
 
@@ -186,42 +222,43 @@ export default function WaterAnalysisResults({ analysis, onExport, onPrint, onUs
           bg: 'bg-gradient-to-br from-red-50 to-red-100/70',
           border: 'border-red-300',
           text: 'text-red-700',
-          badge: 'bg-gradient-to-r from-red-500 to-red-600 text-white'
+          badge: 'bg-gradient-to-r from-red-500 to-red-600 text-white',
         };
       case 'MEDIUM':
         return {
           bg: 'bg-gradient-to-br from-yellow-50 to-amber-100/70',
           border: 'border-yellow-300',
           text: 'text-yellow-700',
-          badge: 'bg-gradient-to-r from-yellow-500 to-amber-500 text-white'
+          badge: 'bg-gradient-to-r from-yellow-500 to-amber-500 text-white',
         };
       case 'LOW':
         return {
           bg: 'bg-gradient-to-br from-green-50 to-emerald-100/70',
           border: 'border-green-300',
           text: 'text-green-700',
-          badge: 'bg-gradient-to-r from-green-500 to-emerald-500 text-white'
+          badge: 'bg-gradient-to-r from-green-500 to-emerald-500 text-white',
         };
       case 'INFORMATIONAL':
         return {
           bg: 'bg-gradient-to-br from-blue-50 to-sky-100/70',
           border: 'border-blue-300',
           text: 'text-blue-700',
-          badge: 'bg-gradient-to-r from-blue-500 to-sky-500 text-white'
+          badge: 'bg-gradient-to-r from-blue-500 to-sky-500 text-white',
         };
       default:
         return {
           bg: 'bg-gradient-to-br from-gray-50 to-slate-100/70',
           border: 'border-gray-300',
           text: 'text-gray-700',
-          badge: 'bg-gradient-to-r from-gray-500 to-slate-500 text-white'
+          badge: 'bg-gradient-to-r from-gray-500 to-slate-500 text-white',
         };
     }
   };
 
-  const hasStructuredData = sections.detectedContaminants.length > 0 ||
-                           sections.overallAssessment ||
-                           sections.filterRecommendations.length > 0;
+  const hasStructuredData =
+    sections.detectedContaminants.length > 0 ||
+    sections.overallAssessment ||
+    sections.filterRecommendations.length > 0;
 
   return (
     <div className="space-y-8">
@@ -234,7 +271,9 @@ export default function WaterAnalysisResults({ analysis, onExport, onPrint, onUs
             </div>
             Water Quality Results
           </h3>
-          <div className={`mt-3 inline-flex items-center gap-3 px-5 py-2.5 ${waterStatus.bg} rounded-full shadow-sm border-2 ${waterStatus.color === 'text-red-600' ? 'border-red-300' : waterStatus.color === 'text-yellow-600' ? 'border-yellow-300' : 'border-green-300'}`}>
+          <div
+            className={`mt-3 inline-flex items-center gap-3 px-5 py-2.5 ${waterStatus.bg} rounded-full shadow-sm border-2 ${waterStatus.color === 'text-red-600' ? 'border-red-300' : waterStatus.color === 'text-yellow-600' ? 'border-yellow-300' : 'border-green-300'}`}
+          >
             <waterStatus.icon className={`w-6 h-6 ${waterStatus.color}`} />
             <span className={`text-base font-bold ${waterStatus.color}`}>
               Water Quality: {waterStatus.status}
@@ -270,7 +309,9 @@ export default function WaterAnalysisResults({ analysis, onExport, onPrint, onUs
                 </div>
                 Overall Assessment
               </h4>
-              <p className="text-gray-800 leading-relaxed text-base">{sections.overallAssessment}</p>
+              <p className="text-gray-800 leading-relaxed text-base">
+                {sections.overallAssessment}
+              </p>
             </div>
           )}
 
@@ -285,7 +326,10 @@ export default function WaterAnalysisResults({ analysis, onExport, onPrint, onUs
               </h4>
               <ul className="space-y-3">
                 {sections.epaViolations.map((violation, idx) => (
-                  <li key={idx} className="text-gray-800 flex items-start gap-3 p-3 bg-white/60 rounded-lg hover:bg-white/80 transition-colors">
+                  <li
+                    key={idx}
+                    className="text-gray-800 flex items-start gap-3 p-3 bg-white/60 rounded-lg hover:bg-white/80 transition-colors"
+                  >
                     <span className="text-red-600 font-bold text-lg mt-0.5">•</span>
                     <span className="flex-1">{violation}</span>
                   </li>
@@ -305,7 +349,10 @@ export default function WaterAnalysisResults({ analysis, onExport, onPrint, onUs
               </h4>
               <ul className="space-y-3">
                 {sections.areasOfConcern.map((concern, idx) => (
-                  <li key={idx} className="text-gray-800 flex items-start gap-3 p-3 bg-white/60 rounded-lg hover:bg-white/80 transition-colors">
+                  <li
+                    key={idx}
+                    className="text-gray-800 flex items-start gap-3 p-3 bg-white/60 rounded-lg hover:bg-white/80 transition-colors"
+                  >
                     <span className="text-yellow-600 font-bold text-lg mt-0.5">•</span>
                     <span className="flex-1">{concern}</span>
                   </li>
@@ -327,22 +374,31 @@ export default function WaterAnalysisResults({ analysis, onExport, onPrint, onUs
                 {sections.detectedContaminants.map((contaminant, idx) => {
                   const colors = getSeverityColor(contaminant.severity);
                   return (
-                    <div key={idx} className={`group p-6 border-2 ${colors.border} ${colors.bg} rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1`}>
+                    <div
+                      key={idx}
+                      className={`group p-6 border-2 ${colors.border} ${colors.bg} rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1`}
+                    >
                       <div className="flex justify-between items-start mb-4">
-                        <h5 className="font-bold text-xl text-gray-900 flex-1">{contaminant.name}</h5>
-                        <span className={`px-4 py-1.5 rounded-full text-xs font-bold ${colors.badge} shadow-sm`}>
+                        <h5 className="font-bold text-xl text-gray-900 flex-1">
+                          {contaminant.name}
+                        </h5>
+                        <span
+                          className={`px-4 py-1.5 rounded-full text-xs font-bold ${colors.badge} shadow-sm`}
+                        >
                           {contaminant.severity}
                         </span>
                       </div>
                       <div className="space-y-3">
                         {contaminant.detected && (
                           <p className={`${colors.text} font-semibold text-base`}>
-                            <span className="text-gray-600 font-normal">Detected:</span> {contaminant.detected}
+                            <span className="text-gray-600 font-normal">Detected:</span>{' '}
+                            {contaminant.detected}
                           </p>
                         )}
                         {contaminant.epaLimit && (
                           <p className={`${colors.text} text-base`}>
-                            <span className="text-gray-600 font-semibold">EPA Limit:</span> {contaminant.epaLimit}
+                            <span className="text-gray-600 font-semibold">EPA Limit:</span>{' '}
+                            {contaminant.epaLimit}
                           </p>
                         )}
                         {contaminant.healthEffects && (
@@ -371,14 +427,23 @@ export default function WaterAnalysisResults({ analysis, onExport, onPrint, onUs
               </h4>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 {sections.filterRecommendations.map((filter, idx) => (
-                  <div key={idx} className="group p-5 bg-gradient-to-br from-white to-green-50/30 border-2 border-green-200 rounded-2xl shadow-md hover:shadow-xl hover:border-green-300 transition-all duration-300 transform hover:-translate-y-1">
+                  <div
+                    key={idx}
+                    className="group p-5 bg-gradient-to-br from-white to-green-50/30 border-2 border-green-200 rounded-2xl shadow-md hover:shadow-xl hover:border-green-300 transition-all duration-300 transform hover:-translate-y-1"
+                  >
                     <div className="font-bold text-green-900 text-lg mb-3 flex items-center gap-2 flex-wrap">
-                      <span className="text-green-700 bg-green-100 px-3 py-1 rounded-lg">{filter.contaminant}</span>
+                      <span className="text-green-700 bg-green-100 px-3 py-1 rounded-lg">
+                        {filter.contaminant}
+                      </span>
                       <span className="text-gray-400 text-2xl">→</span>
-                      <span className="text-green-800 bg-green-50 px-3 py-1 rounded-lg border border-green-200">{filter.filterType}</span>
+                      <span className="text-green-800 bg-green-50 px-3 py-1 rounded-lg border border-green-200">
+                        {filter.filterType}
+                      </span>
                     </div>
                     {filter.description && (
-                      <p className="text-gray-700 text-sm mb-3 leading-relaxed bg-white/60 p-3 rounded-lg">{filter.description}</p>
+                      <p className="text-gray-700 text-sm mb-3 leading-relaxed bg-white/60 p-3 rounded-lg">
+                        {filter.description}
+                      </p>
                     )}
                     {filter.cost && (
                       <p className="text-green-800 font-bold text-sm flex items-center gap-2 mt-3 pt-3 border-t border-green-200">
@@ -402,8 +467,13 @@ export default function WaterAnalysisResults({ analysis, onExport, onPrint, onUs
               </h4>
               <ol className="space-y-3">
                 {sections.recommendedActions.map((action, idx) => (
-                  <li key={idx} className="text-gray-800 flex items-start gap-4 p-3 bg-white/60 rounded-lg hover:bg-white/80 transition-colors">
-                    <span className="font-bold text-headspace-orange text-xl min-w-[2rem] flex items-center justify-center h-8 w-8 bg-orange-100 rounded-lg">{idx + 1}</span>
+                  <li
+                    key={idx}
+                    className="text-gray-800 flex items-start gap-4 p-3 bg-white/60 rounded-lg hover:bg-white/80 transition-colors"
+                  >
+                    <span className="font-bold text-headspace-orange text-xl min-w-[2rem] flex items-center justify-center h-8 w-8 bg-orange-100 rounded-lg">
+                      {idx + 1}
+                    </span>
                     <span className="flex-1 pt-1.5 leading-relaxed">{action}</span>
                   </li>
                 ))}
@@ -422,7 +492,10 @@ export default function WaterAnalysisResults({ analysis, onExport, onPrint, onUs
               </h4>
               <ul className="space-y-3">
                 {sections.assistancePrograms.map((program, idx) => (
-                  <li key={idx} className="text-gray-800 flex items-start gap-3 p-3 bg-white/60 rounded-lg hover:bg-white/80 transition-colors">
+                  <li
+                    key={idx}
+                    className="text-gray-800 flex items-start gap-3 p-3 bg-white/60 rounded-lg hover:bg-white/80 transition-colors"
+                  >
                     <span className="text-headspace-blue font-bold text-lg mt-0.5">•</span>
                     <span className="flex-1 leading-relaxed">{program}</span>
                   </li>

@@ -18,7 +18,7 @@ export async function generateWarrantyClaim(apiKey, claimData) {
     issueDate,
     urgency, // "Emergency", "Urgent", "Standard"
     photos,
-    preferredServiceDate
+    preferredServiceDate,
   } = claimData;
 
   const systemPrompt = `You are an expert at filing home warranty claims. You know how to describe issues in ways that maximize approval chances and minimize denials.`;
@@ -108,12 +108,12 @@ Provide all content ready to copy/paste.`;
     return {
       success: true,
       claimPackage: result.email,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   } catch (error) {
     return {
       success: false,
-      error: error.message
+      error: error.message,
     };
   }
 }
@@ -134,7 +134,7 @@ export async function generateInsuranceClaim(apiKey, claimData) {
     policeReport, // if applicable
     emergencyRepairs,
     photos,
-    witnesses
+    witnesses,
   } = claimData;
 
   const systemPrompt = `You are a licensed public insurance adjuster. You know how to file insurance claims that get paid fairly and quickly.`;
@@ -248,12 +248,12 @@ Provide complete claim package ready to submit.`;
     return {
       success: true,
       claimPackage: result.email,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   } catch (error) {
     return {
       success: false,
-      error: error.message
+      error: error.message,
     };
   }
 }
@@ -275,7 +275,7 @@ export async function generateRebateApplication(apiKey, rebateData) {
     energyStarRating,
     invoice,
     beforePhoto,
-    afterPhoto
+    afterPhoto,
   } = rebateData;
 
   const systemPrompt = `You are an expert at utility rebate applications. You know exactly what documentation utilities require and how to maximize rebate amounts.`;
@@ -371,16 +371,21 @@ If application denied:
 Provide complete application package ready to submit.`;
 
   try {
-    const result = await API.generateEmail(apiKey, systemPrompt, userPrompt, [invoice, beforePhoto, afterPhoto].filter(Boolean));
+    const result = await API.generateEmail(
+      apiKey,
+      systemPrompt,
+      userPrompt,
+      [invoice, beforePhoto, afterPhoto].filter(Boolean)
+    );
     return {
       success: true,
       application: result.email,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   } catch (error) {
     return {
       success: false,
-      error: error.message
+      error: error.message,
     };
   }
 }
@@ -397,7 +402,7 @@ export async function generateGovernmentProgramApplication(apiKey, programData) 
     veteranStatus,
     seniorStatus,
     disabilityStatus,
-    supportingDocuments
+    supportingDocuments,
   } = programData;
 
   const systemPrompt = `You are an expert in government assistance programs. You know how to complete applications correctly and maximize approval chances.`;
@@ -504,16 +509,21 @@ If denied:
 Provide complete application package with all forms and documentation guidance.`;
 
   try {
-    const result = await API.generateEmail(apiKey, systemPrompt, userPrompt, supportingDocuments || []);
+    const result = await API.generateEmail(
+      apiKey,
+      systemPrompt,
+      userPrompt,
+      supportingDocuments || []
+    );
     return {
       success: true,
       application: result.email,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   } catch (error) {
     return {
       success: false,
-      error: error.message
+      error: error.message,
     };
   }
 }
@@ -527,7 +537,7 @@ export async function generateDisputeLetter(apiKey, disputeData) {
     policyLanguage, // relevant contract/policy language
     supportingEvidence,
     customerName,
-    accountNumber
+    accountNumber,
   } = disputeData;
 
   const systemPrompt = `You are an expert at writing dispute and appeal letters. You know how to cite policy language, regulations, and leverage consumer rights to overturn denials.`;
@@ -626,12 +636,12 @@ Generate complete letter ready to send via certified mail.`;
     return {
       success: true,
       disputeLetter: result.email,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   } catch (error) {
     return {
       success: false,
-      error: error.message
+      error: error.message,
     };
   }
 }
@@ -646,12 +656,14 @@ export function generateFollowUpSchedule(claimType, filedDate) {
       schedule.push({
         date: new Date(filed.getTime() + 2 * 24 * 60 * 60 * 1000), // 2 days
         action: 'Confirm claim received and contractor assigned',
-        script: 'I filed a claim on [date] (#[claim number]). Can you confirm it was received and when a contractor will contact me?'
+        script:
+          'I filed a claim on [date] (#[claim number]). Can you confirm it was received and when a contractor will contact me?',
       });
       schedule.push({
         date: new Date(filed.getTime() + 7 * 24 * 60 * 60 * 1000), // 1 week
         action: 'Follow up if no contractor contact',
-        script: 'It has been one week since I filed claim #[number]. No contractor has contacted me. Please escalate this to a supervisor.'
+        script:
+          'It has been one week since I filed claim #[number]. No contractor has contacted me. Please escalate this to a supervisor.',
       });
       break;
 
@@ -659,17 +671,20 @@ export function generateFollowUpSchedule(claimType, filedDate) {
       schedule.push({
         date: new Date(filed.getTime() + 3 * 24 * 60 * 60 * 1000), // 3 days
         action: 'Confirm adjuster assigned',
-        script: 'I filed claim #[number] on [date]. Can you confirm an adjuster has been assigned and when they will contact me?'
+        script:
+          'I filed claim #[number] on [date]. Can you confirm an adjuster has been assigned and when they will contact me?',
       });
       schedule.push({
         date: new Date(filed.getTime() + 14 * 24 * 60 * 60 * 1000), // 2 weeks
         action: 'Request status update',
-        script: 'I filed claim #[number] two weeks ago. What is the status? When can I expect an initial settlement offer?'
+        script:
+          'I filed claim #[number] two weeks ago. What is the status? When can I expect an initial settlement offer?',
       });
       schedule.push({
         date: new Date(filed.getTime() + 30 * 24 * 60 * 60 * 1000), // 30 days
         action: 'Escalate to supervisor/file complaint',
-        script: 'My claim filed 30 days ago has not been resolved. I request immediate escalation and will file a complaint with the state insurance commissioner if not resolved within 5 business days.'
+        script:
+          'My claim filed 30 days ago has not been resolved. I request immediate escalation and will file a complaint with the state insurance commissioner if not resolved within 5 business days.',
       });
       break;
 
@@ -677,12 +692,14 @@ export function generateFollowUpSchedule(claimType, filedDate) {
       schedule.push({
         date: new Date(filed.getTime() + 7 * 24 * 60 * 60 * 1000), // 1 week
         action: 'Confirm application received',
-        script: 'I submitted a rebate application on [date] (confirmation #[number]). Can you confirm it was received and is being processed?'
+        script:
+          'I submitted a rebate application on [date] (confirmation #[number]). Can you confirm it was received and is being processed?',
       });
       schedule.push({
         date: new Date(filed.getTime() + 45 * 24 * 60 * 60 * 1000), // 6 weeks
         action: 'Request status update',
-        script: 'I submitted a rebate application 6 weeks ago. What is the status? When can I expect payment?'
+        script:
+          'I submitted a rebate application 6 weeks ago. What is the status? When can I expect payment?',
       });
       break;
 
@@ -690,12 +707,13 @@ export function generateFollowUpSchedule(claimType, filedDate) {
       schedule.push({
         date: new Date(filed.getTime() + 14 * 24 * 60 * 60 * 1000), // 2 weeks
         action: 'Confirm application received',
-        script: 'I submitted an application for [program] on [date]. Can you confirm it was received and what the next steps are?'
+        script:
+          'I submitted an application for [program] on [date]. Can you confirm it was received and what the next steps are?',
       });
       schedule.push({
         date: new Date(filed.getTime() + 60 * 24 * 60 * 60 * 1000), // 2 months
         action: 'Request status update',
-        script: 'I applied for [program] two months ago. What is the status of my application?'
+        script: 'I applied for [program] two months ago. What is the status of my application?',
       });
       break;
   }
@@ -709,5 +727,5 @@ export default {
   generateRebateApplication,
   generateGovernmentProgramApplication,
   generateDisputeLetter,
-  generateFollowUpSchedule
+  generateFollowUpSchedule,
 };

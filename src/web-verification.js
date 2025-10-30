@@ -14,14 +14,12 @@ export async function verifyRegulations(apiKey, issueType, state, city) {
   // Options: Google Custom Search API, Bing Search API, or SerpAPI
   // For now, we'll use Claude with a web search prompt (simulated)
 
-  const results = await Promise.all(
-    queries.map(query => searchAndVerify(apiKey, query))
-  );
+  const results = await Promise.all(queries.map((query) => searchAndVerify(apiKey, query)));
 
   return {
     success: true,
-    verifiedRegulations: results.filter(r => r.success),
-    timestamp: new Date().toISOString()
+    verifiedRegulations: results.filter((r) => r.success),
+    timestamp: new Date().toISOString(),
   };
 }
 
@@ -35,36 +33,36 @@ function buildVerificationQueries(issueType, state, city) {
       `${state} mold remediation laws ${currentYear}`,
       `${city} ${state} air quality standards regulations`,
       `EPA indoor air quality standards ${currentYear}`,
-      `${state} VOC emissions regulations residential`
+      `${state} VOC emissions regulations residential`,
     ],
     'water-quality': [
       `${state} drinking water standards ${currentYear}`,
       `EPA lead copper rule revisions ${currentYear}`,
       `${city} water quality testing requirements`,
-      `${state} PFAS regulations drinking water`
+      `${state} PFAS regulations drinking water`,
     ],
     'hvac-ventilation': [
       `${state} residential ventilation requirements ${currentYear}`,
       `ASHRAE 62.2 ${currentYear} updates`,
       `${city} building code HVAC requirements`,
-      `${state} mechanical code ventilation standards`
+      `${state} mechanical code ventilation standards`,
     ],
     'lead-asbestos': [
       `EPA lead dust standards ${currentYear}`,
       `${state} lead paint disclosure laws`,
       `${state} asbestos regulations residential`,
-      `EPA lead and copper rule ${currentYear}`
+      `EPA lead and copper rule ${currentYear}`,
     ],
-    'radon': [
+    radon: [
       `EPA radon action level ${currentYear}`,
       `${state} radon testing requirements`,
-      `${state} radon mitigation standards`
+      `${state} radon mitigation standards`,
     ],
     'carbon-monoxide': [
       `${state} carbon monoxide detector requirements ${currentYear}`,
       `EPA CO exposure limits`,
-      `${city} ${state} CO alarm laws`
-    ]
+      `${city} ${state} CO alarm laws`,
+    ],
   };
 
   // Get queries for this issue type
@@ -110,13 +108,13 @@ Format as a structured response with clear sections.`;
       success: true,
       query: query,
       findings: result.email,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   } catch (error) {
     return {
       success: false,
       query: query,
-      error: error.message
+      error: error.message,
     };
   }
 }
@@ -147,12 +145,12 @@ Be precise and cite official sources.`;
       success: true,
       regulation: regulation,
       verification: result.email,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   } catch (error) {
     return {
       success: false,
-      error: error.message
+      error: error.message,
     };
   }
 }
@@ -165,7 +163,7 @@ export async function crossCheckEmail(apiKey, generatedEmail, issueType, state, 
   if (!verification.success) {
     return {
       success: false,
-      error: 'Failed to verify regulations'
+      error: 'Failed to verify regulations',
     };
   }
 
@@ -178,7 +176,7 @@ export async function crossCheckEmail(apiKey, generatedEmail, issueType, state, 
 ${generatedEmail}
 
 **VERIFIED CURRENT REGULATIONS**:
-${verification.verifiedRegulations.map(v => `Query: ${v.query}\n${v.findings}\n`).join('\n---\n')}
+${verification.verifiedRegulations.map((v) => `Query: ${v.query}\n${v.findings}\n`).join('\n---\n')}
 
 **TASK**:
 1. Identify any regulations, standards, or laws cited in the email
@@ -200,12 +198,12 @@ Provide a structured report with:
       success: true,
       accuracyReport: result.email,
       verifiedRegulations: verification.verifiedRegulations,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   } catch (error) {
     return {
       success: false,
-      error: error.message
+      error: error.message,
     };
   }
 }
@@ -220,10 +218,10 @@ function extractRegulationCitations(emailText) {
     /\b\d+\s+CFR\s+(?:Part\s+)?\d+/g, // Code of Federal Regulations (40 CFR Part 141)
     /\bEPA\s+[A-Z]+\s+\d+/g, // EPA standards
     /\bASHRAE\s+Standard\s+[\d.]+/g, // ASHRAE standards
-    /\b[A-Z][a-z]+\s+(?:Health|Safety|Building|Municipal)\s+Code\s+[§\d\-.]+/g // State/local codes
+    /\b[A-Z][a-z]+\s+(?:Health|Safety|Building|Municipal)\s+Code\s+[§\d\-.]+/g, // State/local codes
   ];
 
-  patterns.forEach(pattern => {
+  patterns.forEach((pattern) => {
     const matches = emailText.match(pattern);
     if (matches) {
       citations.push(...matches);
@@ -240,7 +238,7 @@ export function generateVerificationReport(verificationResults) {
     queriesRun: verificationResults.verifiedRegulations.length,
     findings: verificationResults.verifiedRegulations,
     summary: `Verified ${verificationResults.verifiedRegulations.length} regulatory sources`,
-    confidence: verificationResults.verifiedRegulations.every(v => v.success) ? 'High' : 'Medium'
+    confidence: verificationResults.verifiedRegulations.every((v) => v.success) ? 'High' : 'Medium',
   };
 
   return report;
@@ -259,12 +257,12 @@ export async function googleCustomSearch(query, apiKey, searchEngineId) {
     return {
       success: true,
       results: data.items || [],
-      query: query
+      query: query,
     };
   } catch (error) {
     return {
       success: false,
-      error: error.message
+      error: error.message,
     };
   }
 }
@@ -280,38 +278,29 @@ export async function serpApiSearch(query, apiKey) {
     return {
       success: true,
       results: data.organic_results || [],
-      query: query
+      query: query,
     };
   } catch (error) {
     return {
       success: false,
-      error: error.message
+      error: error.message,
     };
   }
 }
 
 // Filter search results for official government sources
 export function filterOfficialSources(searchResults) {
-  const officialDomains = [
-    '.gov',
-    'epa.gov',
-    'hud.gov',
-    'cdc.gov',
-    'osha.gov',
-    'ashrae.org'
-  ];
+  const officialDomains = ['.gov', 'epa.gov', 'hud.gov', 'cdc.gov', 'osha.gov', 'ashrae.org'];
 
-  return searchResults.filter(result => {
+  return searchResults.filter((result) => {
     const url = result.link || result.url || '';
-    return officialDomains.some(domain => url.includes(domain));
+    return officialDomains.some((domain) => url.includes(domain));
   });
 }
 
 // Compile verification sources for email footer
 export function compileVerificationFooter(verificationResults) {
-  const sources = verificationResults.verifiedRegulations
-    .map(v => v.findings)
-    .join('\n\n');
+  const sources = verificationResults.verifiedRegulations.map((v) => v.findings).join('\n\n');
 
   return `
 
@@ -321,7 +310,7 @@ export function compileVerificationFooter(verificationResults) {
 This email was generated with regulatory verification conducted on ${new Date().toLocaleDateString()}.
 
 Sources consulted:
-${verificationResults.verifiedRegulations.map(v => `- ${v.query}`).join('\n')}
+${verificationResults.verifiedRegulations.map((v) => `- ${v.query}`).join('\n')}
 
 ⚠️ **Important**: While we strive for accuracy, regulations change frequently. Verify current standards with:
 - EPA.gov (federal environmental standards)
@@ -341,5 +330,5 @@ export default {
   googleCustomSearch,
   serpApiSearch,
   filterOfficialSources,
-  compileVerificationFooter
+  compileVerificationFooter,
 };

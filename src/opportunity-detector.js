@@ -43,7 +43,7 @@ export async function scanAllOpportunities(apiKey, customerProfile) {
     currentIssues, // Array of problems
 
     // Appliances
-    appliances // List of equipment
+    appliances, // List of equipment
   } = customerProfile;
 
   const opportunities = {
@@ -51,7 +51,7 @@ export async function scanAllOpportunities(apiKey, customerProfile) {
     shortTerm: [], // Within 3 months
     longTerm: [], // Planning horizon
     totalEstimatedValue: 0,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   };
 
   try {
@@ -66,7 +66,7 @@ export async function scanAllOpportunities(apiKey, customerProfile) {
         monthlyWaterBill,
         monthlyElectricBill,
         monthlyGasBill,
-        homeDetails
+        homeDetails,
       });
 
       opportunities.immediate.push(...utilityOpps.immediate);
@@ -79,7 +79,7 @@ export async function scanAllOpportunities(apiKey, customerProfile) {
       const warrantyOpps = await detectWarrantyOpportunities(apiKey, {
         warrantyProvider: homeWarrantyProvider,
         currentIssues,
-        appliances
+        appliances,
       });
 
       opportunities.immediate.push(...warrantyOpps.immediate);
@@ -91,7 +91,7 @@ export async function scanAllOpportunities(apiKey, customerProfile) {
       const insuranceOpps = await detectInsuranceOpportunities(apiKey, {
         insuranceProvider: homeInsuranceProvider,
         currentIssues,
-        propertyAge
+        propertyAge,
       });
 
       opportunities.immediate.push(...insuranceOpps.immediate);
@@ -107,7 +107,7 @@ export async function scanAllOpportunities(apiKey, customerProfile) {
       householdIncome,
       householdSize,
       homeOwnership,
-      currentIssues
+      currentIssues,
     });
 
     opportunities.immediate.push(...govOpps.immediate);
@@ -120,7 +120,7 @@ export async function scanAllOpportunities(apiKey, customerProfile) {
       const hoaOpps = await detectHOAOpportunities(apiKey, {
         hoaFee,
         hoaDocuments,
-        currentIssues
+        currentIssues,
       });
 
       opportunities.immediate.push(...hoaOpps.immediate);
@@ -139,7 +139,7 @@ export async function scanAllOpportunities(apiKey, customerProfile) {
       homeOwnership,
       householdIncome,
       currentIssues,
-      homeImprovements: [] // Could track improvements made
+      homeImprovements: [], // Could track improvements made
     });
 
     opportunities.shortTerm.push(...taxOpps.shortTerm);
@@ -153,14 +153,13 @@ export async function scanAllOpportunities(apiKey, customerProfile) {
 
     return {
       success: true,
-      opportunities: opportunities
+      opportunities: opportunities,
     };
-
   } catch (error) {
     return {
       success: false,
       error: error.message,
-      partialOpportunities: opportunities
+      partialOpportunities: opportunities,
     };
   }
 }
@@ -469,29 +468,31 @@ function parseOpportunities(responseText) {
     immediate: [],
     shortTerm: [],
     longTerm: [],
-    estimatedValue: 0
+    estimatedValue: 0,
   };
 
   // Extract dollar amounts and sum them
   const dollarMatches = responseText.match(/\$[\d,]+/g) || [];
-  const values = dollarMatches.map(m => parseInt(m.replace(/[$,]/g, '')));
+  const values = dollarMatches.map((m) => parseInt(m.replace(/[$,]/g, '')));
   result.estimatedValue = values.reduce((sum, val) => sum + val, 0);
 
   // Parse opportunities (simplified - in production, use more robust parsing)
   const sections = {
-    'IMMEDIATE': 'immediate',
+    IMMEDIATE: 'immediate',
     'SHORT TERM': 'shortTerm',
-    'LONG TERM': 'longTerm'
+    'LONG TERM': 'longTerm',
   };
 
   for (const [sectionName, key] of Object.entries(sections)) {
-    const sectionMatch = responseText.match(new RegExp(`${sectionName}[^]*?(?=(?:IMMEDIATE|SHORT TERM|LONG TERM|$))`, 's'));
+    const sectionMatch = responseText.match(
+      new RegExp(`${sectionName}[^]*?(?=(?:IMMEDIATE|SHORT TERM|LONG TERM|$))`, 's')
+    );
     if (sectionMatch) {
       const items = sectionMatch[0].split(/\d+\.\s/).slice(1);
-      result[key] = items.map(item => ({
+      result[key] = items.map((item) => ({
         description: item.split('\n')[0],
         fullDetails: item,
-        category: key
+        category: key,
       }));
     }
   }
@@ -547,12 +548,12 @@ Prioritize by:
     return {
       success: true,
       actionPlan: result.email,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   } catch (error) {
     return {
       success: false,
-      error: error.message
+      error: error.message,
     };
   }
 }
@@ -573,20 +574,20 @@ export function generateOpportunitySummary(opportunities) {
       government: 0,
       hoa: 0,
       tax: 0,
-      recall: 0
+      recall: 0,
     },
     quickWins: [], // High value, low effort
-    bigTicketItems: [] // High value, may require effort
+    bigTicketItems: [], // High value, may require effort
   };
 
   // Categorize all opportunities
   const allOpps = [
     ...opportunities.immediate,
     ...opportunities.shortTerm,
-    ...opportunities.longTerm
+    ...opportunities.longTerm,
   ];
 
-  allOpps.forEach(opp => {
+  allOpps.forEach((opp) => {
     const desc = opp.description.toLowerCase();
     if (desc.includes('utility') || desc.includes('rebate') || desc.includes('energy')) {
       summary.categories.utility++;
@@ -594,7 +595,11 @@ export function generateOpportunitySummary(opportunities) {
       summary.categories.warranty++;
     } else if (desc.includes('insurance') || desc.includes('claim')) {
       summary.categories.insurance++;
-    } else if (desc.includes('government') || desc.includes('assistance') || desc.includes('grant')) {
+    } else if (
+      desc.includes('government') ||
+      desc.includes('assistance') ||
+      desc.includes('grant')
+    ) {
       summary.categories.government++;
     } else if (desc.includes('hoa')) {
       summary.categories.hoa++;
@@ -623,5 +628,5 @@ export function generateOpportunitySummary(opportunities) {
 export default {
   scanAllOpportunities,
   generateActionPlan,
-  generateOpportunitySummary
+  generateOpportunitySummary,
 };

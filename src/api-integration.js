@@ -1,12 +1,25 @@
-// API Integration Module for HomeLLM
-// Handles communication with Claude API for email generation and document analysis
+/**
+ * API Integration Module for HomeLLM
+ * Handles communication with Claude API for email generation and document analysis
+ */
 
-// Use Vite proxy to forward requests to Anthropic API (avoids CORS)
-const ANTHROPIC_API_URL = '/api/anthropic/v1/messages';
+import { fetchWithRetry, withTimeout } from './utils/retry';
+import { debug, error as logError, warn, info } from './utils/logger';
+
+// Use environment variables for configuration
+const ANTHROPIC_API_URL =
+  import.meta.env.VITE_ANTHROPIC_API_ENDPOINT || '/api/anthropic/v1/messages';
 const ANTHROPIC_VERSION = '2023-06-01';
-const MODEL = 'claude-sonnet-4-5-20250929'; // Claude Sonnet 4.5 - Latest model
+const MODEL = import.meta.env.VITE_CLAUDE_MODEL || 'claude-sonnet-4-5-20250929';
+const API_TIMEOUT = parseInt(import.meta.env.VITE_API_TIMEOUT || '120000', 10);
+const MAX_RETRIES = parseInt(import.meta.env.VITE_MAX_RETRIES || '3', 10);
+const TEMPERATURE = parseFloat(import.meta.env.VITE_CLAUDE_TEMPERATURE || '0.5');
 
-// Validate API key format
+/**
+ * Validates API key format
+ * @param {string} apiKey - Anthropic API key
+ * @returns {{valid: boolean, error: string|null}} Validation result
+ */
 export function validateApiKey(apiKey) {
   if (!apiKey || apiKey.trim() === '') {
     return { valid: false, error: 'API key is required' };
@@ -19,14 +32,20 @@ export function validateApiKey(apiKey) {
   return { valid: true, error: null };
 }
 
-// Generate email using Claude API
+/**
+ * Generates email using Claude API
+ * @param {string} apiKey - Anthropic API key
+ * @param {string} systemPrompt - System prompt for Claude
+ * @param {string} userPrompt - User prompt with request details
+ * @param {Array} images - Array of image/document objects with type, size, and data
+ * @returns {Promise<{success: boolean, email: string, usage: object}>} Generated email and usage stats
+ */
 export async function generateEmail(apiKey, systemPrompt, userPrompt, images = []) {
-  console.log('[API] generateEmail called');
-  console.log('[API] Images/docs count:', images?.length || 0);
+  debug('API', 'generateEmail called with', images?.length || 0, 'documents');
 
   const validation = validateApiKey(apiKey);
   if (!validation.valid) {
-    console.error('[API] API key validation failed:', validation.error);
+    logError('API', 'API key validation failed:', validation.error);
     throw new Error(validation.error);
   }
 
@@ -36,39 +55,43 @@ export async function generateEmail(apiKey, systemPrompt, userPrompt, images = [
   // Add documents (images or PDFs) first if any
   if (images && images.length > 0) {
     images.forEach((doc, index) => {
-      console.log(`[API] Processing document ${index + 1}:`, {
+      debug('API', `Processing document ${index + 1}:`, {
         type: doc.type,
         size: doc.size,
-        hasData: !!doc.data
+        hasData: !!doc.data,
       });
 
-      // Extract base64 data from data URL
+      // Validate and extract base64 data from data URL
+      if (!doc.data || !doc.data.includes(',')) {
+        warn('API', `Document ${index + 1} has invalid data format, skipping`);
+        return;
+      }
+
       const base64Data = doc.data.split(',')[1];
       const mediaType = doc.type || 'image/jpeg';
 
-      console.log(`[API] Base64 data length:`, base64Data?.length);
-      console.log(`[API] Media type:`, mediaType);
+      debug('API', `Base64 data length: ${base64Data?.length}, media type: ${mediaType}`);
 
       // Check if it's a PDF or image
       if (mediaType === 'application/pdf') {
-        console.log('[API] Adding as PDF document');
+        debug('API', 'Adding as PDF document');
         content.push({
           type: 'document',
           source: {
             type: 'base64',
             media_type: 'application/pdf',
-            data: base64Data
-          }
+            data: base64Data,
+          },
         });
       } else {
-        console.log('[API] Adding as image');
+        debug('API', 'Adding as image');
         content.push({
           type: 'image',
           source: {
             type: 'base64',
             media_type: mediaType,
-            data: base64Data
-          }
+            data: base64Data,
+          },
         });
       }
     });
@@ -77,97 +100,141 @@ export async function generateEmail(apiKey, systemPrompt, userPrompt, images = [
   // Add text prompt
   content.push({
     type: 'text',
-    text: userPrompt
+    text: userPrompt,
   });
 
-  console.log('[API] Content array length:', content.length);
+  debug('API', `Content array has ${content.length} items`);
 
   const requestBody = {
     model: MODEL,
     max_tokens: 4096,
-    temperature: 1,
+    temperature: TEMPERATURE,
     system: systemPrompt,
     messages: [
       {
         role: 'user',
-        content: content
-      }
-    ]
+        content: content,
+      },
+    ],
   };
 
-  console.log('[API] Request body prepared, model:', MODEL);
-  console.log('[API] System prompt length:', systemPrompt?.length);
-  console.log('[API] User prompt length:', userPrompt?.length);
+  debug('API', `Request prepared - model: ${MODEL}, temperature: ${TEMPERATURE}`);
 
   try {
-    console.log('[API] Sending request to:', ANTHROPIC_API_URL);
+    info('API', 'Sending request to Anthropic API');
 
-    const response = await fetch(ANTHROPIC_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': ANTHROPIC_VERSION,
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify(requestBody)
-    });
+    // Use retry with timeout
+    const response = await withTimeout(
+      fetchWithRetry(
+        ANTHROPIC_API_URL,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': apiKey,
+            'anthropic-version': ANTHROPIC_VERSION,
+            // REMOVED: 'anthropic-dangerous-direct-browser-access': 'true'
+            // This header exposes API keys in browser DevTools
+            // Instead, use serverless proxy to keep keys server-side
+          },
+          body: JSON.stringify(requestBody),
+        },
+        {
+          maxRetries: MAX_RETRIES,
+          context: 'API Request',
+        }
+      ),
+      API_TIMEOUT,
+      'API request timed out after ' + API_TIMEOUT + 'ms'
+    );
 
-    console.log('[API] Response status:', response.status);
-    console.log('[API] Response ok:', response.ok);
+    debug('API', `Response status: ${response.status}`);
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
 
-      console.error('[API] Error response:', JSON.stringify(errorData, null, 2));
+      logError('API', 'API error response:', response.status, errorData.error?.message);
 
       if (response.status === 401) {
-        throw new Error(`Invalid API key: ${errorData.error?.message || 'Please check your Anthropic API key'}`);
+        throw new Error(
+          `Invalid API key: ${errorData.error?.message || 'Please check your Anthropic API key'}`
+        );
       } else if (response.status === 429) {
-        throw new Error('Rate limit exceeded. Please try again in a moment.');
+        throw new Error(
+          'Rate limit exceeded. Please try again in a moment or upgrade your API plan.'
+        );
       } else if (response.status === 400) {
-        throw new Error(`Bad request: ${errorData.error?.message || 'Invalid request parameters'}`);
+        throw new Error(
+          `Bad request: ${errorData.error?.message || 'Invalid request parameters. Please check your input.'}`
+        );
+      } else if (response.status >= 500) {
+        throw new Error(
+          `Server error (${response.status}): Anthropic API is experiencing issues. Please try again later.`
+        );
       } else {
-        throw new Error(`API error (${response.status}): ${errorData.error?.message || 'Unknown error'}`);
+        throw new Error(
+          `API error (${response.status}): ${errorData.error?.message || 'Unknown error occurred'}`
+        );
       }
     }
 
     const data = await response.json();
 
     if (!data.content || !data.content[0] || !data.content[0].text) {
-      throw new Error('Unexpected API response format');
+      logError('API', 'Unexpected response format:', data);
+      throw new Error('Unexpected API response format. Please try again.');
     }
+
+    debug(
+      'API',
+      `Request successful - tokens: ${data.usage?.input_tokens}/${data.usage?.output_tokens}`
+    );
 
     return {
       success: true,
       email: data.content[0].text,
       usage: {
         inputTokens: data.usage?.input_tokens || 0,
-        outputTokens: data.usage?.output_tokens || 0
-      }
+        outputTokens: data.usage?.output_tokens || 0,
+      },
     };
   } catch (error) {
-    console.error('[API] Error:', error);
+    logError('API', 'Error during API call:', error.message);
 
     if (error.name === 'TypeError' || error.message.includes('fetch')) {
-      throw new Error('Network error. Please check your internet connection and API key.');
+      throw new Error('Network error. Please check your internet connection and try again.');
     }
 
     throw error;
   }
 }
 
-// Analyze document using Claude API
+/**
+ * Analyzes document using Claude API
+ * @param {string} apiKey - Anthropic API key
+ * @param {string} systemPrompt - System prompt for Claude
+ * @param {string} documentPrompt - Document analysis prompt
+ * @param {Array} documentImages - Array of document images
+ * @returns {Promise<{success: boolean, email: string, usage: object}>} Analysis result
+ */
 export async function analyzeDocument(apiKey, systemPrompt, documentPrompt, documentImages = []) {
   // Use same function as generateEmail since the API call is identical
   return generateEmail(apiKey, systemPrompt, documentPrompt, documentImages);
 }
 
-// Extract text from PDF (client-side using pdf.js or similar)
+/**
+ * Extract text from PDF (client-side using pdf.js or similar)
+ * @param {File} file - PDF file to extract text from
+ * @returns {Promise<string>} Extracted text
+ * @throws {Error} Not implemented yet
+ */
 export async function extractTextFromPDF(file) {
   // This would require pdf.js library
   // For now, return a placeholder that instructs user to use text extraction
-  throw new Error('PDF text extraction requires pdf.js library. Please convert PDF to text or use image upload.');
+  warn('API', 'PDF extraction not implemented, file:', file.name);
+  throw new Error(
+    'PDF text extraction requires pdf.js library. Please convert PDF to text or use image upload.'
+  );
 }
 
 // Process image for OCR if needed (using Claude's vision capabilities)
@@ -187,12 +254,12 @@ Format the output clearly with headings and preserve the document structure.`;
     const result = await generateEmail(apiKey, systemPrompt, userPrompt, [image]);
     return {
       success: true,
-      extractedText: result.email
+      extractedText: result.email,
     };
   } catch (error) {
     return {
       success: false,
-      error: error.message
+      error: error.message,
     };
   }
 }
@@ -216,12 +283,12 @@ Format with specific code sections and citations where possible.`;
     const result = await generateEmail(apiKey, systemPrompt, userPrompt, []);
     return {
       success: true,
-      codes: result.email
+      codes: result.email,
     };
   } catch (error) {
     return {
       success: false,
-      error: error.message
+      error: error.message,
     };
   }
 }
@@ -229,15 +296,34 @@ Format with specific code sections and citations where possible.`;
 // Check if issue requires immediate emergency response
 export function assessUrgency(issueType, measurements, healthImpact) {
   const emergencyKeywords = [
-    'carbon monoxide', 'gas leak', 'structural collapse', 'immediate danger',
-    'severe poisoning', 'unconscious', 'hospital', 'emergency room',
-    'acute exposure', 'life-threatening'
+    'carbon monoxide',
+    'gas leak',
+    'structural collapse',
+    'immediate danger',
+    'severe poisoning',
+    'unconscious',
+    'hospital',
+    'emergency room',
+    'acute exposure',
+    'life-threatening',
   ];
 
   const highUrgencyThresholds = {
-    'carbon-monoxide': { level: 70, unit: 'ppm', message: 'CO levels above 70 ppm are immediately dangerous' },
-    'radon': { level: 10, unit: 'pCi/L', message: 'Radon levels above 10 pCi/L require immediate action' },
-    'lead': { level: 5000, unit: 'μg/dL', message: 'Lead levels in blood above 5 μg/dL in children require immediate intervention' }
+    'carbon-monoxide': {
+      level: 70,
+      unit: 'ppm',
+      message: 'CO levels above 70 ppm are immediately dangerous',
+    },
+    radon: {
+      level: 10,
+      unit: 'pCi/L',
+      message: 'Radon levels above 10 pCi/L require immediate action',
+    },
+    lead: {
+      level: 5000,
+      unit: 'μg/dL',
+      message: 'Lead levels in blood above 5 μg/dL in children require immediate intervention',
+    },
   };
 
   const combinedText = `${issueType} ${measurements} ${healthImpact}`.toLowerCase();
@@ -247,8 +333,9 @@ export function assessUrgency(issueType, measurements, healthImpact) {
     if (combinedText.includes(keyword)) {
       return {
         emergency: true,
-        message: 'This appears to be an emergency situation. Consider calling 911 or local emergency services immediately.',
-        recommendedLevel: 'emergency'
+        message:
+          'This appears to be an emergency situation. Consider calling 911 or local emergency services immediately.',
+        recommendedLevel: 'emergency',
       };
     }
   }
@@ -263,7 +350,7 @@ export function assessUrgency(issueType, measurements, healthImpact) {
         emergency: false,
         highUrgency: true,
         message: threshold.message,
-        recommendedLevel: 'high'
+        recommendedLevel: 'high',
       };
     }
   }
@@ -272,7 +359,7 @@ export function assessUrgency(issueType, measurements, healthImpact) {
     emergency: false,
     highUrgency: false,
     message: null,
-    recommendedLevel: null
+    recommendedLevel: null,
   };
 }
 
@@ -298,12 +385,12 @@ export function saveEmailDraft(draftId, email, formData) {
     id: draftId,
     email: email,
     formData: formData,
-    savedAt: new Date().toISOString()
+    savedAt: new Date().toISOString(),
   };
 
   try {
     const drafts = JSON.parse(localStorage.getItem('homellm_drafts') || '[]');
-    const existingIndex = drafts.findIndex(d => d.id === draftId);
+    const existingIndex = drafts.findIndex((d) => d.id === draftId);
 
     if (existingIndex >= 0) {
       drafts[existingIndex] = draft;
@@ -318,13 +405,16 @@ export function saveEmailDraft(draftId, email, formData) {
   }
 }
 
-// Load email drafts from local storage
+/**
+ * Loads email drafts from local storage
+ * @returns {Array} Array of saved drafts sorted by date (newest first)
+ */
 export function loadEmailDrafts() {
   try {
     const drafts = JSON.parse(localStorage.getItem('homellm_drafts') || '[]');
     return drafts.sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
   } catch (error) {
-    console.error('Error loading drafts:', error);
+    logError('API', 'Error loading drafts:', error.message);
     return [];
   }
 }
@@ -333,7 +423,7 @@ export function loadEmailDrafts() {
 export function deleteEmailDraft(draftId) {
   try {
     const drafts = JSON.parse(localStorage.getItem('homellm_drafts') || '[]');
-    const filtered = drafts.filter(d => d.id !== draftId);
+    const filtered = drafts.filter((d) => d.id !== draftId);
     localStorage.setItem('homellm_drafts', JSON.stringify(filtered));
     return { success: true };
   } catch (error) {
@@ -369,7 +459,9 @@ ${formatEmailOutput(email, 'html')}
       break;
     case 'pdf':
       // PDF generation would require a library like jsPDF
-      throw new Error('PDF export requires additional library. Please copy to clipboard and use external tool.');
+      throw new Error(
+        'PDF export requires additional library. Please copy to clipboard and use external tool.'
+      );
     default:
       throw new Error('Unsupported export format');
   }
@@ -385,14 +477,18 @@ ${formatEmailOutput(email, 'html')}
   URL.revokeObjectURL(url);
 }
 
-// Copy to clipboard with fallback
+/**
+ * Copies text to clipboard with fallback for older browsers
+ * @param {string} text - Text to copy
+ * @returns {Promise<{success: boolean, error?: string}>} Copy result
+ */
 export async function copyToClipboard(text) {
   if (navigator.clipboard && navigator.clipboard.writeText) {
     try {
       await navigator.clipboard.writeText(text);
       return { success: true };
     } catch (error) {
-      console.error('Clipboard API failed:', error);
+      warn('API', 'Clipboard API failed:', error.message);
     }
   }
 
@@ -436,5 +532,5 @@ export default {
   deleteEmailDraft,
   exportEmail,
   copyToClipboard,
-  generateMailtoLink
+  generateMailtoLink,
 };

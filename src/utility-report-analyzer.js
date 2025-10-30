@@ -9,36 +9,50 @@ export const utilityReportSources = {
     nationalDatabases: [
       'https://www.ewg.org/tapwater/', // EWG Tap Water Database
       'https://ofmpub.epa.gov/apex/sfdw/f?p=108:1', // EPA SDWIS
-      'https://www.epa.gov/waterdata/water-quality-data' // EPA Water Quality Portal
+      'https://www.epa.gov/waterdata/water-quality-data', // EPA Water Quality Portal
     ],
     commonProviders: [
-      { name: 'Denver Water', urlPattern: 'denverwater.org/your-water/water-quality/water-quality-reports' },
+      {
+        name: 'Denver Water',
+        urlPattern: 'denverwater.org/your-water/water-quality/water-quality-reports',
+      },
       { name: 'NYC DEP', urlPattern: 'nyc.gov/site/dep/water/drinking-water-quality-report' },
       { name: 'LADWP', urlPattern: 'ladwp.com/water-quality' },
       { name: 'SF PUC', urlPattern: 'sfpuc.org/about-us/our-systems/water-supply/water-quality' },
-      { name: 'Chicago Water', urlPattern: 'chicago.gov/city/en/depts/water/supp_info/water_quality_resultsandreports' },
+      {
+        name: 'Chicago Water',
+        urlPattern: 'chicago.gov/city/en/depts/water/supp_info/water_quality_resultsandreports',
+      },
       { name: 'Philadelphia Water', urlPattern: 'phila.gov/water/quality' },
       { name: 'Boston Water', urlPattern: 'mwra.com/water/html/wqual' },
-      { name: 'Seattle Public Utilities', urlPattern: 'seattle.gov/utilities/your-services/water/water-quality' }
-    ]
+      {
+        name: 'Seattle Public Utilities',
+        urlPattern: 'seattle.gov/utilities/your-services/water/water-quality',
+      },
+    ],
   },
   electricity: {
     providers: [
       { name: 'PG&E', urlPattern: 'pge.com', type: 'electricity' },
       { name: 'ConEd', urlPattern: 'coned.com', type: 'electricity' },
       { name: 'Duke Energy', urlPattern: 'duke-energy.com', type: 'electricity' },
-      { name: 'Southern California Edison', urlPattern: 'sce.com', type: 'electricity' }
+      { name: 'Southern California Edison', urlPattern: 'sce.com', type: 'electricity' },
     ],
-    programs: ['energy efficiency rebates', 'solar incentives', 'time-of-use rates', 'low-income assistance']
+    programs: [
+      'energy efficiency rebates',
+      'solar incentives',
+      'time-of-use rates',
+      'low-income assistance',
+    ],
   },
   gas: {
     providers: [
       { name: 'SoCalGas', urlPattern: 'socalgas.com', type: 'natural gas' },
       { name: 'PG&E Gas', urlPattern: 'pge.com/gas', type: 'natural gas' },
-      { name: 'Con Edison Gas', urlPattern: 'coned.com/gas', type: 'natural gas' }
+      { name: 'Con Edison Gas', urlPattern: 'coned.com/gas', type: 'natural gas' },
     ],
-    programs: ['weatherization', 'furnace rebates', 'leak detection']
-  }
+    programs: ['weatherization', 'furnace rebates', 'leak detection'],
+  },
 };
 
 // Analyze water quality report (EWG or utility company)
@@ -102,12 +116,12 @@ Provide specific numbers, dates, and actionable recommendations. If report URL c
     return {
       success: true,
       analysis: result.email,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   } catch (error) {
     return {
       success: false,
-      error: error.message
+      error: error.message,
     };
   }
 }
@@ -158,12 +172,12 @@ Provide specific, actionable guidance even without live access to EWG database.`
       success: true,
       analysis: result.email,
       source: 'EWG Knowledge',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   } catch (error) {
     return {
       success: false,
-      error: error.message
+      error: error.message,
     };
   }
 }
@@ -241,12 +255,12 @@ Provide specific program names, phone numbers, and website links. Even without l
     return {
       success: true,
       benefits: result.email,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   } catch (error) {
     return {
       success: false,
-      error: error.message
+      error: error.message,
     };
   }
 }
@@ -311,12 +325,12 @@ Step-by-step implementation plan with timeline`;
     return {
       success: true,
       analysis: result.email,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   } catch (error) {
     return {
       success: false,
-      error: error.message
+      error: error.message,
     };
   }
 }
@@ -367,12 +381,12 @@ Provide specific numbers and calculations.`;
     return {
       success: true,
       comparison: result.email,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   } catch (error) {
     return {
       success: false,
-      error: error.message
+      error: error.message,
     };
   }
 }
@@ -388,7 +402,7 @@ export async function generateUtilityOptimizationReport(apiKey, customerData) {
     waterBill,
     electricBill,
     gasBill,
-    homeDetails
+    homeDetails,
   } = customerData;
 
   const results = {
@@ -398,7 +412,7 @@ export async function generateUtilityOptimizationReport(apiKey, customerData) {
     gasBenefits: null,
     energyEfficiency: null,
     totalSavingsOpportunity: 0,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   };
 
   try {
@@ -414,12 +428,22 @@ export async function generateUtilityOptimizationReport(apiKey, customerData) {
 
     // Discover electric utility benefits
     if (electricUtility) {
-      results.electricBenefits = await discoverUtilityBenefits(apiKey, electricUtility, 'electricity', address);
+      results.electricBenefits = await discoverUtilityBenefits(
+        apiKey,
+        electricUtility,
+        'electricity',
+        address
+      );
     }
 
     // Discover gas utility benefits
     if (gasUtility) {
-      results.gasBenefits = await discoverUtilityBenefits(apiKey, gasUtility, 'natural gas', address);
+      results.gasBenefits = await discoverUtilityBenefits(
+        apiKey,
+        gasUtility,
+        'natural gas',
+        address
+      );
     }
 
     // Analyze energy efficiency
@@ -433,13 +457,13 @@ export async function generateUtilityOptimizationReport(apiKey, customerData) {
 
     return {
       success: true,
-      results: results
+      results: results,
     };
   } catch (error) {
     return {
       success: false,
       error: error.message,
-      partialResults: results
+      partialResults: results,
     };
   }
 }
@@ -475,12 +499,12 @@ Format as structured JSON for easy parsing.`;
     return {
       success: true,
       extractedData: result.email,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   } catch (error) {
     return {
       success: false,
-      error: error.message
+      error: error.message,
     };
   }
 }
@@ -493,25 +517,32 @@ export async function fetchUtilityReport(utilityName, utilityType) {
   const knownUrls = {
     'Denver Water': 'https://www.denverwater.org/your-water/water-quality/water-quality-reports',
     'NYC DEP': 'https://www.nyc.gov/site/dep/water/drinking-water-quality-report.page',
-    'LADWP': 'https://www.ladwp.com/water-quality',
+    LADWP: 'https://www.ladwp.com/water-quality',
     'PG&E': 'https://www.pge.com/customer-service',
-    'ConEd': 'https://www.coned.com/customer-service'
+    ConEd: 'https://www.coned.com/customer-service',
   };
 
   const url = knownUrls[utilityName];
 
   return {
     utilityName,
-    reportUrl: url || `https://www.google.com/search?q=${encodeURIComponent(utilityName + ' water quality report')}`,
+    reportUrl:
+      url ||
+      `https://www.google.com/search?q=${encodeURIComponent(utilityName + ' water quality report')}`,
     instructions: url
       ? `Report available at: ${url}`
       : `Search for "${utilityName} water quality report" or contact utility customer service`,
-    fetchable: !!url
+    fetchable: !!url,
   };
 }
 
 // Generate email to request missing reports/info from utility
-export function generateUtilityInfoRequestEmail(utilityName, customerName, accountNumber, requestedInfo) {
+export function generateUtilityInfoRequestEmail(
+  utilityName,
+  customerName,
+  accountNumber,
+  requestedInfo
+) {
   const subject = `Request for ${requestedInfo} - Account ${accountNumber}`;
 
   const body = `Dear ${utilityName} Customer Service,
@@ -523,24 +554,36 @@ Account Number: ${accountNumber}
 Requested Information: ${requestedInfo}
 
 Specifically, I would like to receive:
-${requestedInfo.includes('water quality') ? `
+${
+  requestedInfo.includes('water quality')
+    ? `
 - Most recent Water Quality Report (Consumer Confidence Report)
 - Historical water quality data for my service area
 - Information about any detected contaminants
 - Available water quality improvement programs
-` : ''}
-${requestedInfo.includes('rebates') ? `
+`
+    : ''
+}
+${
+  requestedInfo.includes('rebates')
+    ? `
 - List of all available rebate programs
 - Eligibility requirements for each program
 - Application forms and procedures
 - Current program availability and funding status
-` : ''}
-${requestedInfo.includes('assistance') ? `
+`
+    : ''
+}
+${
+  requestedInfo.includes('assistance')
+    ? `
 - Low-income assistance programs
 - Medical baseline allowances
 - Payment plan options
 - Crisis assistance programs
-` : ''}
+`
+    : ''
+}
 
 Please provide this information within the timeframe required by law (typically 30 days). I would prefer to receive this information via email, but will accept mail if necessary.
 
@@ -555,7 +598,7 @@ This request is made pursuant to my rights as a utility customer and applicable 
   return {
     subject,
     body,
-    recommendedMethod: 'email' // or 'phone', 'mail', 'web form'
+    recommendedMethod: 'email', // or 'phone', 'mail', 'web form'
   };
 }
 
@@ -568,5 +611,5 @@ export default {
   generateUtilityOptimizationReport,
   extractUtilityBillInfo,
   fetchUtilityReport,
-  generateUtilityInfoRequestEmail
+  generateUtilityInfoRequestEmail,
 };

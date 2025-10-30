@@ -1,10 +1,38 @@
 import React, { useState, useEffect } from 'react';
-import { Send, FileText, AlertCircle, CheckCircle, Loader2, Copy, Download, Droplet, Shield, FileCheck, Mail, Upload, X, Eye, EyeOff, Save, Clock, ExternalLink, Search, Info } from 'lucide-react';
+import toast from 'react-hot-toast';
+import {
+  Send,
+  FileText,
+  AlertCircle,
+  CheckCircle,
+  Loader2,
+  Copy,
+  Download,
+  Droplet,
+  Shield,
+  FileCheck,
+  Mail,
+  Upload,
+  X,
+  Eye,
+  EyeOff,
+  Save,
+  Clock,
+  ExternalLink,
+  Search,
+  Info,
+} from 'lucide-react';
 import { getRelevantRegulations, issueTypeMapping } from './regulatory-knowledge-base';
-import { systemPrompt, generateEmailPrompt, generateDocumentAnalysisPrompt, generateSubjectLine } from './email-prompt-engine';
+import {
+  systemPrompt,
+  generateEmailPrompt,
+  generateDocumentAnalysisPrompt,
+  generateSubjectLine,
+} from './email-prompt-engine';
 import * as API from './api-integration';
 import * as WebVerify from './web-verification';
 import WaterAnalysisResults from './components/WaterAnalysisResults';
+import { sanitizeForPrint } from './utils/sanitize';
 
 export default function HomeLLM() {
   const [activeTab, setActiveTab] = useState('email');
@@ -32,7 +60,7 @@ export default function HomeLLM() {
     senderName: '',
     senderEmail: '',
     senderPhone: '',
-    senderAddress: ''
+    senderAddress: '',
   });
 
   const [generatedEmail, setGeneratedEmail] = useState('');
@@ -69,6 +97,32 @@ export default function HomeLLM() {
     }
   }, []);
 
+  // Auto-save draft every 30 seconds
+  useEffect(() => {
+    if (!generatedEmail || generatedEmail.trim() === '') {
+      return; // Don't auto-save if there's no content
+    }
+
+    const autoSaveTimer = setTimeout(() => {
+      const draftId = 'auto-save';
+      const result = API.saveEmailDraft(draftId, generatedEmail, formData);
+      if (result.success) {
+        setSavedDrafts(API.loadEmailDrafts());
+        // Show subtle notification that doesn't interrupt user
+        toast('Draft auto-saved', {
+          duration: 2000,
+          icon: '💾',
+          style: {
+            background: '#f3f4f6',
+            color: '#374151',
+          },
+        });
+      }
+    }, 30000); // 30 seconds
+
+    return () => clearTimeout(autoSaveTimer);
+  }, [generatedEmail, formData]);
+
   // Save API key to localStorage when it changes
   const handleApiKeyChange = (e) => {
     const newKey = e.target.value;
@@ -96,7 +150,7 @@ export default function HomeLLM() {
     { value: 'utility-access', label: 'Utility Access / Service Issues' },
     { value: 'radon', label: 'Radon Detection' },
     { value: 'carbon-monoxide', label: 'Carbon Monoxide / Gas Leaks' },
-    { value: 'electromagnetic', label: 'EMF / Electromagnetic Fields' }
+    { value: 'electromagnetic', label: 'EMF / Electromagnetic Fields' },
   ];
 
   const recipients = [
@@ -106,32 +160,96 @@ export default function HomeLLM() {
     { value: 'local-govt', label: 'Local Government / City Council' },
     { value: 'state-agency', label: 'State Environmental/Health Agency' },
     { value: 'federal-agency', label: 'Federal Agency (EPA, HUD, etc.)' },
-    { value: 'nonprofit', label: 'Advocacy Nonprofit / Legal Aid' }
+    { value: 'nonprofit', label: 'Advocacy Nonprofit / Legal Aid' },
   ];
 
   const escalationLevels = [
     { value: 'initial', label: 'Initial Request', description: 'Polite inquiry, first contact' },
-    { value: 'professional', label: 'Professional Follow-up', description: 'Firm but courteous, cite obligations' },
-    { value: 'formal', label: 'Formal Complaint', description: 'Document violations, demand action' },
-    { value: 'legal', label: 'Legal Notice', description: 'Pre-legal action, indicate consequences' }
+    {
+      value: 'professional',
+      label: 'Professional Follow-up',
+      description: 'Firm but courteous, cite obligations',
+    },
+    {
+      value: 'formal',
+      label: 'Formal Complaint',
+      description: 'Document violations, demand action',
+    },
+    {
+      value: 'legal',
+      label: 'Legal Notice',
+      description: 'Pre-legal action, indicate consequences',
+    },
   ];
 
   const urgencyLevels = [
     { value: 'low', label: 'Low', description: 'Non-urgent, quality of life issue' },
     { value: 'medium', label: 'Medium', description: 'Needs attention, affecting comfort/health' },
     { value: 'high', label: 'High', description: 'Serious health risk, requires prompt action' },
-    { value: 'emergency', label: 'Emergency', description: 'Immediate safety hazard' }
+    { value: 'emergency', label: 'Emergency', description: 'Immediate safety hazard' },
   ];
 
-  const statesList = ['Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 'Delaware', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi', 'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire', 'New Jersey', 'New Mexico', 'New York', 'North Carolina', 'North Dakota', 'Ohio', 'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island', 'South Carolina', 'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington', 'West Virginia', 'Wisconsin', 'Wyoming'];
+  const statesList = [
+    'Alabama',
+    'Alaska',
+    'Arizona',
+    'Arkansas',
+    'California',
+    'Colorado',
+    'Connecticut',
+    'Delaware',
+    'Florida',
+    'Georgia',
+    'Hawaii',
+    'Idaho',
+    'Illinois',
+    'Indiana',
+    'Iowa',
+    'Kansas',
+    'Kentucky',
+    'Louisiana',
+    'Maine',
+    'Maryland',
+    'Massachusetts',
+    'Michigan',
+    'Minnesota',
+    'Mississippi',
+    'Missouri',
+    'Montana',
+    'Nebraska',
+    'Nevada',
+    'New Hampshire',
+    'New Jersey',
+    'New Mexico',
+    'New York',
+    'North Carolina',
+    'North Dakota',
+    'Ohio',
+    'Oklahoma',
+    'Oregon',
+    'Pennsylvania',
+    'Rhode Island',
+    'South Carolina',
+    'South Dakota',
+    'Tennessee',
+    'Texas',
+    'Utah',
+    'Vermont',
+    'Virginia',
+    'Washington',
+    'West Virginia',
+    'Wisconsin',
+    'Wyoming',
+  ];
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
 
     // Check urgency when measurements or health impact change
     if (name === 'measurements' || name === 'healthImpact') {
-      const alert = API.assessUrgency(formData.issueType,
+      const alert = API.assessUrgency(
+        formData.issueType,
         name === 'measurements' ? value : formData.measurements,
         name === 'healthImpact' ? value : formData.healthImpact
       );
@@ -145,28 +263,31 @@ export default function HomeLLM() {
 
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
-    const imagePromises = files.map(file => {
+    const imagePromises = files.map((file) => {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onload = (event) => resolve({
-          name: file.name,
-          data: event.target.result,
-          type: file.type
-        });
+        reader.onload = (event) =>
+          resolve({
+            name: file.name,
+            data: event.target.result,
+            type: file.type,
+          });
         reader.onerror = reject;
         reader.readAsDataURL(file);
       });
     });
 
-    Promise.all(imagePromises).then(images => {
-      setAttachedImages(prev => [...prev, ...images]);
-    }).catch(err => {
-      setError('Failed to load images: ' + err.message);
-    });
+    Promise.all(imagePromises)
+      .then((images) => {
+        setAttachedImages((prev) => [...prev, ...images]);
+      })
+      .catch((err) => {
+        setError('Failed to load images: ' + err.message);
+      });
   };
 
   const removeImage = (index) => {
-    setAttachedImages(prev => prev.filter((_, i) => i !== index));
+    setAttachedImages((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleLookupCodes = async () => {
@@ -185,13 +306,20 @@ export default function HomeLLM() {
     setError('');
 
     try {
-      const result = await API.lookupBuildingCodes(apiKey, formData.city, formData.state, formData.issueType);
+      const result = await API.lookupBuildingCodes(
+        apiKey,
+        formData.city,
+        formData.state,
+        formData.issueType
+      );
 
       if (result.success) {
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
-          regulations: (prev.regulations ? prev.regulations + '\n\n' : '') +
-                       '=== AUTO-LOOKED UP CODES ===\n' + result.codes
+          regulations:
+            (prev.regulations ? prev.regulations + '\n\n' : '') +
+            '=== AUTO-LOOKED UP CODES ===\n' +
+            result.codes,
         }));
       } else {
         setError(result.error);
@@ -204,8 +332,18 @@ export default function HomeLLM() {
   };
 
   const validateForm = () => {
-    const required = ['issueType', 'recipient', 'location', 'city', 'state', 'evidence', 'desiredOutcome', 'senderName', 'senderEmail'];
-    const missing = required.filter(field => !formData[field]);
+    const required = [
+      'issueType',
+      'recipient',
+      'location',
+      'city',
+      'state',
+      'evidence',
+      'desiredOutcome',
+      'senderName',
+      'senderEmail',
+    ];
+    const missing = required.filter((field) => !formData[field]);
 
     if (missing.length > 0) {
       setError(`Please fill in required fields: ${missing.join(', ')}`);
@@ -240,7 +378,11 @@ export default function HomeLLM() {
       const userPrompt = generateEmailPrompt(formData, regulations, attachedImages);
 
       // Generate subject line
-      const subject = generateSubjectLine(formData.issueType, formData.escalationLevel, formData.location);
+      const subject = generateSubjectLine(
+        formData.issueType,
+        formData.escalationLevel,
+        formData.location
+      );
       setGeneratedSubject(subject);
 
       // Call API
@@ -343,9 +485,10 @@ export default function HomeLLM() {
 
     if (result.success) {
       setSavedDrafts(API.loadEmailDrafts());
-      alert('Draft saved successfully!');
+      toast.success('Draft saved successfully!');
     } else {
       setError(result.error);
+      toast.error('Failed to save draft');
     }
   };
 
@@ -367,7 +510,9 @@ export default function HomeLLM() {
       // Check file size (max 32MB for PDFs, 5MB for images)
       const maxSize = file.type === 'application/pdf' ? 32 * 1024 * 1024 : 5 * 1024 * 1024;
       if (file.size > maxSize) {
-        setError(`File too large. Maximum size: ${file.type === 'application/pdf' ? '32MB' : '5MB'}`);
+        setError(
+          `File too large. Maximum size: ${file.type === 'application/pdf' ? '32MB' : '5MB'}`
+        );
         return;
       }
 
@@ -377,7 +522,7 @@ export default function HomeLLM() {
           name: file.name,
           data: event.target.result,
           type: file.type,
-          size: file.size
+          size: file.size,
         });
         setError(''); // Clear any previous errors
       };
@@ -408,15 +553,17 @@ export default function HomeLLM() {
       console.log('[Water Analysis] API key present:', !!apiKey);
 
       // Generate analysis prompt
-      const documentTypeDesc = waterReport.type === 'application/pdf'
-        ? 'See attached water quality report PDF'
-        : 'See attached water quality report image';
+      const documentTypeDesc =
+        waterReport.type === 'application/pdf'
+          ? 'See attached water quality report PDF'
+          : 'See attached water quality report image';
       const analysisPrompt = generateDocumentAnalysisPrompt('waterReport', documentTypeDesc);
 
       console.log('[Water Analysis] Prompt generated, length:', analysisPrompt.length);
 
       // Analyze the document with vision/PDF support
-      const systemPrompt = 'You are an expert water quality analyst with deep knowledge of EPA drinking water standards, state regulations, and health effects of water contaminants.';
+      const systemPrompt =
+        'You are an expert water quality analyst with deep knowledge of EPA drinking water standards, state regulations, and health effects of water contaminants.';
 
       console.log('[Water Analysis] Calling API...');
 
@@ -454,7 +601,9 @@ export default function HomeLLM() {
       // Check file size (max 32MB for PDFs, 5MB for images)
       const maxSize = file.type === 'application/pdf' ? 32 * 1024 * 1024 : 5 * 1024 * 1024;
       if (file.size > maxSize) {
-        setError(`File too large. Maximum size: ${file.type === 'application/pdf' ? '32MB' : '5MB'}`);
+        setError(
+          `File too large. Maximum size: ${file.type === 'application/pdf' ? '32MB' : '5MB'}`
+        );
         return;
       }
 
@@ -464,7 +613,7 @@ export default function HomeLLM() {
           name: file.name,
           data: event.target.result,
           type: file.type,
-          size: file.size
+          size: file.size,
         });
         setError(''); // Clear any previous errors
       };
@@ -490,13 +639,15 @@ export default function HomeLLM() {
 
     try {
       // Generate analysis prompt
-      const documentTypeDesc = warrantyDoc.type === 'application/pdf'
-        ? 'See attached warranty document PDF'
-        : 'See attached warranty document image';
+      const documentTypeDesc =
+        warrantyDoc.type === 'application/pdf'
+          ? 'See attached warranty document PDF'
+          : 'See attached warranty document image';
       const analysisPrompt = generateDocumentAnalysisPrompt('warranty', documentTypeDesc);
 
       // Analyze the document with vision/PDF support
-      const systemPrompt = 'You are an expert in consumer warranty law and product warranties with knowledge of consumer protection rights, implied warranties, and claim procedures.';
+      const systemPrompt =
+        'You are an expert in consumer warranty law and product warranties with knowledge of consumer protection rights, implied warranties, and claim procedures.';
 
       // Claude API supports both images and PDFs
       const result = await API.analyzeDocument(
@@ -519,10 +670,12 @@ export default function HomeLLM() {
   };
 
   const handleUseAnalysisInEmail = (analysis) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      evidence: (prev.evidence ? prev.evidence + '\n\n' : '') +
-                '=== FROM DOCUMENT ANALYSIS ===\n' + analysis
+      evidence:
+        (prev.evidence ? prev.evidence + '\n\n' : '') +
+        '=== FROM DOCUMENT ANALYSIS ===\n' +
+        analysis,
     }));
     setActiveTab('email');
   };
@@ -541,11 +694,14 @@ export default function HomeLLM() {
   const handlePrintWaterAnalysis = () => {
     if (waterAnalysis) {
       const printWindow = window.open('', '_blank');
+      // Sanitize waterAnalysis to prevent XSS attacks
+      const sanitizedAnalysis = sanitizeForPrint(waterAnalysis);
       printWindow.document.write(`
         <!DOCTYPE html>
         <html>
         <head>
           <title>Water Quality Analysis Report</title>
+          <meta charset="UTF-8">
           <style>
             body {
               font-family: Arial, sans-serif;
@@ -566,7 +722,7 @@ export default function HomeLLM() {
             <h1>Water Quality Analysis Report</h1>
             <p>Generated by HomeLLM | ${new Date().toLocaleDateString()}</p>
           </div>
-          <pre>${waterAnalysis}</pre>
+          <pre>${sanitizedAnalysis}</pre>
           <div class="footer">
             <p>HomeLLM - AI-Powered Home Health Advocacy Platform</p>
             <p>This analysis is for informational purposes only. Consult qualified professionals for health and legal advice.</p>
@@ -590,13 +746,17 @@ export default function HomeLLM() {
                 <Shield className="w-10 h-10" />
                 HomeLLM
               </h1>
-              <p className="text-orange-100 mt-2 text-lg">AI-Powered Home Health Advocacy Platform</p>
-              <p className="text-orange-50 text-sm mt-1">Empowering residents with data-driven advocacy tools</p>
+              <p className="text-orange-100 mt-2 text-lg">
+                AI-Powered Home Health Advocacy Platform
+              </p>
+              <p className="text-orange-50 text-sm mt-1">
+                Empowering residents with data-driven advocacy tools
+              </p>
             </div>
           </div>
 
           {/* API Key Input - Only show if not set or has error */}
-          {(!apiKey || apiKeyError) ? (
+          {!apiKey || apiKeyError ? (
             <div className="mt-6">
               <label className="block text-sm font-semibold text-white mb-2">
                 Anthropic API Key *
@@ -621,10 +781,20 @@ export default function HomeLLM() {
                 </div>
               </div>
               {apiKeyError && (
-                <p className="mt-2 text-sm text-red-200 bg-red-500/20 rounded px-3 py-1">{apiKeyError}</p>
+                <p className="mt-2 text-sm text-red-200 bg-red-500/20 rounded px-3 py-1">
+                  {apiKeyError}
+                </p>
               )}
               <p className="mt-2 text-sm text-orange-100">
-                Get your API key from <a href="https://console.anthropic.com/" target="_blank" rel="noopener noreferrer" className="text-white font-semibold hover:underline">console.anthropic.com</a>
+                Get your API key from{' '}
+                <a
+                  href="https://console.anthropic.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white font-semibold hover:underline"
+                >
+                  console.anthropic.com
+                </a>
               </p>
             </div>
           ) : (
@@ -699,13 +869,21 @@ export default function HomeLLM() {
             <div className="p-6">
               {/* Urgency Alert */}
               {urgencyAlert && (
-                <div className={`mb-6 p-4 rounded-lg ${
-                  urgencyAlert.emergency ? 'bg-red-100 border-2 border-red-500' : 'bg-yellow-100 border-2 border-yellow-500'
-                }`}>
+                <div
+                  className={`mb-6 p-4 rounded-lg ${
+                    urgencyAlert.emergency
+                      ? 'bg-red-100 border-2 border-red-500'
+                      : 'bg-yellow-100 border-2 border-yellow-500'
+                  }`}
+                >
                   <div className="flex items-start gap-3">
-                    <AlertCircle className={`w-6 h-6 flex-shrink-0 ${urgencyAlert.emergency ? 'text-red-600' : 'text-yellow-600'}`} />
+                    <AlertCircle
+                      className={`w-6 h-6 flex-shrink-0 ${urgencyAlert.emergency ? 'text-red-600' : 'text-yellow-600'}`}
+                    />
                     <div>
-                      <h3 className={`font-bold ${urgencyAlert.emergency ? 'text-red-800' : 'text-yellow-800'}`}>
+                      <h3
+                        className={`font-bold ${urgencyAlert.emergency ? 'text-red-800' : 'text-yellow-800'}`}
+                      >
                         {urgencyAlert.emergency ? '⚠️ EMERGENCY' : '⚠️ HIGH URGENCY'}
                       </h3>
                       <p className={urgencyAlert.emergency ? 'text-red-700' : 'text-yellow-700'}>
@@ -742,7 +920,7 @@ export default function HomeLLM() {
                       required
                     >
                       <option value="">Select issue type...</option>
-                      {issueTypes.map(type => (
+                      {issueTypes.map((type) => (
                         <option key={type.value} value={type.value}>
                           {type.label}
                         </option>
@@ -763,7 +941,7 @@ export default function HomeLLM() {
                       required
                     >
                       <option value="">Select recipient...</option>
-                      {recipients.map(recipient => (
+                      {recipients.map((recipient) => (
                         <option key={recipient.value} value={recipient.value}>
                           {recipient.label}
                         </option>
@@ -790,9 +968,7 @@ export default function HomeLLM() {
                   {/* City and State */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        City *
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">City *</label>
                       <input
                         type="text"
                         name="city"
@@ -815,7 +991,7 @@ export default function HomeLLM() {
                         required
                       >
                         <option value="">State</option>
-                        {statesList.map(state => (
+                        {statesList.map((state) => (
                           <option key={state} value={state}>
                             {state}
                           </option>
@@ -860,8 +1036,11 @@ export default function HomeLLM() {
                       Escalation Level
                     </label>
                     <div className="space-y-2">
-                      {escalationLevels.map(level => (
-                        <label key={level.value} className="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                      {escalationLevels.map((level) => (
+                        <label
+                          key={level.value}
+                          className="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50"
+                        >
                           <input
                             type="radio"
                             name="escalationLevel"
@@ -885,8 +1064,11 @@ export default function HomeLLM() {
                       Urgency Level
                     </label>
                     <div className="space-y-2">
-                      {urgencyLevels.map(level => (
-                        <label key={level.value} className="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                      {urgencyLevels.map((level) => (
+                        <label
+                          key={level.value}
+                          className="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50"
+                        >
                           <input
                             type="radio"
                             name="urgencyLevel"
@@ -1025,7 +1207,10 @@ export default function HomeLLM() {
                     {attachedImages.length > 0 && (
                       <div className="mt-3 space-y-2">
                         {attachedImages.map((img, idx) => (
-                          <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                          <div
+                            key={idx}
+                            className="flex items-center justify-between p-2 bg-gray-50 rounded"
+                          >
                             <span className="text-sm text-gray-700">{img.name}</span>
                             <button
                               onClick={() => removeImage(idx)}
@@ -1147,9 +1332,12 @@ export default function HomeLLM() {
                           <div className="flex items-start gap-3">
                             <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0" />
                             <div className="flex-1">
-                              <h3 className="font-bold text-green-800 mb-1">✓ Regulations Verified</h3>
+                              <h3 className="font-bold text-green-800 mb-1">
+                                ✓ Regulations Verified
+                              </h3>
                               <p className="text-sm text-green-700 mb-2">
-                                This email has been cross-checked against current regulations and standards.
+                                This email has been cross-checked against current regulations and
+                                standards.
                               </p>
                               <button
                                 onClick={() => setShowVerification(!showVerification)}
@@ -1165,7 +1353,9 @@ export default function HomeLLM() {
                       {/* Verification Report Details */}
                       {showVerification && verificationReport && (
                         <div className="p-4 bg-white border border-gray-300 rounded-lg max-h-[400px] overflow-y-auto">
-                          <h3 className="font-bold text-gray-800 mb-3">Accuracy Verification Report</h3>
+                          <h3 className="font-bold text-gray-800 mb-3">
+                            Accuracy Verification Report
+                          </h3>
                           <pre className="whitespace-pre-wrap font-sans text-sm text-gray-700">
                             {verificationReport.accuracyReport}
                           </pre>
@@ -1257,13 +1447,17 @@ export default function HomeLLM() {
                     <Droplet className="w-7 h-7 text-headspace-blue" />
                     Water Quality Report Analysis
                   </h2>
-                  <p className="text-gray-600">Upload your water quality report for comprehensive EPA standards analysis</p>
+                  <p className="text-gray-600">
+                    Upload your water quality report for comprehensive EPA standards analysis
+                  </p>
                 </div>
               )}
 
               {/* Error Display */}
               {error && (
-                <div className={`mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg flex items-start gap-3 ${waterAnalysis ? 'mx-8 mt-8' : ''}`}>
+                <div
+                  className={`mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg flex items-start gap-3 ${waterAnalysis ? 'mx-8 mt-8' : ''}`}
+                >
                   <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
                   <p className="text-red-800">{error}</p>
                 </div>
@@ -1301,8 +1495,10 @@ export default function HomeLLM() {
                             <p className="font-semibold text-green-800">File Ready for Analysis</p>
                             <p className="text-sm text-green-700 truncate">{waterReport.name}</p>
                             <p className="text-xs text-green-600 mt-1">
-                              {waterReport.type === 'application/pdf' ? 'PDF Document' : 'Image File'} •
-                              {(waterReport.size / 1024 / 1024).toFixed(2)} MB
+                              {waterReport.type === 'application/pdf'
+                                ? 'PDF Document'
+                                : 'Image File'}{' '}
+                              •{(waterReport.size / 1024 / 1024).toFixed(2)} MB
                             </p>
                           </div>
                         </div>
@@ -1346,7 +1542,9 @@ export default function HomeLLM() {
                     <div className="p-12 bg-gradient-to-br from-gray-50 to-blue-50/30 border-2 border-dashed border-gray-300 rounded-2xl text-center w-full">
                       <Droplet className="w-20 h-20 text-gray-300 mx-auto mb-6" />
                       <p className="text-gray-500 text-lg font-medium">Analysis will appear here</p>
-                      <p className="text-gray-400 text-sm mt-2">Upload and analyze your water quality report to see detailed results</p>
+                      <p className="text-gray-400 text-sm mt-2">
+                        Upload and analyze your water quality report to see detailed results
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -1447,8 +1645,11 @@ export default function HomeLLM() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {savedDrafts.map(draft => (
-                    <div key={draft.id} className="p-4 border border-gray-300 rounded-lg hover:border-indigo-500">
+                  {savedDrafts.map((draft) => (
+                    <div
+                      key={draft.id}
+                      className="p-4 border border-gray-300 rounded-lg hover:border-indigo-500"
+                    >
                       <div className="flex justify-between items-start mb-2">
                         <div>
                           <div className="font-medium text-gray-800">
@@ -1488,15 +1689,18 @@ export default function HomeLLM() {
         <div className="mt-8 text-center">
           <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-headspace-orange/20">
             <p className="text-headspace-slate font-medium">
-              HomeLLM - Powered by <span className="text-headspace-orange font-semibold">Claude AI</span>
+              HomeLLM - Powered by{' '}
+              <span className="text-headspace-orange font-semibold">Claude AI</span>
             </p>
             <p className="text-gray-600 text-sm mt-2">
-              Empowering residents with data-driven advocacy tools for home health and environmental safety
+              Empowering residents with data-driven advocacy tools for home health and environmental
+              safety
             </p>
             <div className="mt-4 pt-4 border-t border-gray-200">
               <p className="text-gray-500 text-xs flex items-center justify-center gap-2">
                 <AlertCircle className="w-4 h-4" />
-                This tool provides information only. Consult qualified legal and medical professionals for advice.
+                This tool provides information only. Consult qualified legal and medical
+                professionals for advice.
               </p>
             </div>
           </div>

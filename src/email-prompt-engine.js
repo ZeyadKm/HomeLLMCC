@@ -44,13 +44,13 @@ export function generateEmailPrompt(formData, regulations, attachedImages = []) 
     senderName,
     senderEmail,
     senderPhone,
-    senderAddress
+    senderAddress,
   } = formData;
 
   // Build regulatory context
   let regulatoryContext = '\n\n## APPLICABLE REGULATIONS AND STANDARDS:\n\n';
 
-  regulations.forEach(reg => {
+  regulations.forEach((reg) => {
     if (reg.level === 'federal') {
       regulatoryContext += `### Federal Regulations:\n`;
       regulatoryContext += `Primary Laws: ${reg.data.primaryLaws.join('; ')}\n\n`;
@@ -199,25 +199,25 @@ function getIssueLabel(issueType) {
     'hvac-ventilation': 'HVAC / Ventilation Issues',
     'lead-asbestos': 'Lead / Asbestos / Hazardous Materials',
     'pest-infestation': 'Pest Infestation',
-    'structural': 'Structural / Safety Hazards',
+    structural: 'Structural / Safety Hazards',
     'noise-pollution': 'Noise Pollution',
     'utility-access': 'Utility Access / Service Issues',
-    'radon': 'Radon Detection',
+    radon: 'Radon Detection',
     'carbon-monoxide': 'Carbon Monoxide / Gas Leaks',
-    'electromagnetic': 'EMF / Electromagnetic Fields'
+    electromagnetic: 'EMF / Electromagnetic Fields',
   };
   return labels[issueType] || issueType;
 }
 
 function getRecipientLabel(recipient) {
   const labels = {
-    'hoa': 'Homeowners Association (HOA)',
+    hoa: 'Homeowners Association (HOA)',
     'property-mgmt': 'Property Management / Landlord',
-    'utility': 'Utility Company',
+    utility: 'Utility Company',
     'local-govt': 'Local Government / City Council',
     'state-agency': 'State Environmental/Health Agency',
     'federal-agency': 'Federal Agency (EPA, HUD, etc.)',
-    'nonprofit': 'Advocacy Nonprofit / Legal Aid'
+    nonprofit: 'Advocacy Nonprofit / Legal Aid',
   };
   return labels[recipient] || recipient;
 }
@@ -235,38 +235,50 @@ function getEscalationGuidance(level, recipientType) {
   const guidance = {
     initial: {
       tone: 'Polite and professional inquiry',
-      approach: 'Assume good faith. This is your first contact about the issue. Express concern and request information or action. Be courteous and assume the recipient may not be aware of the problem.',
-      consequences: 'Do not mention legal action or escalation. Focus on collaborative problem-solving.',
-      timeline: 'Request response within 7-14 days for non-urgent issues, 2-3 days for urgent issues.'
+      approach:
+        'Assume good faith. This is your first contact about the issue. Express concern and request information or action. Be courteous and assume the recipient may not be aware of the problem.',
+      consequences:
+        'Do not mention legal action or escalation. Focus on collaborative problem-solving.',
+      timeline:
+        'Request response within 7-14 days for non-urgent issues, 2-3 days for urgent issues.',
     },
     professional: {
       tone: 'Firm but courteous follow-up',
-      approach: 'Reference previous contact if applicable. Clearly state obligations and expectations. Cite relevant regulations to establish the legal framework. Maintain professional courtesy but be direct about the seriousness of the issue.',
-      consequences: 'Hint at potential escalation (reporting to agencies, seeking legal counsel) without explicit threats.',
-      timeline: 'Request response within 5-7 days for non-urgent issues, 24-48 hours for urgent issues.'
+      approach:
+        'Reference previous contact if applicable. Clearly state obligations and expectations. Cite relevant regulations to establish the legal framework. Maintain professional courtesy but be direct about the seriousness of the issue.',
+      consequences:
+        'Hint at potential escalation (reporting to agencies, seeking legal counsel) without explicit threats.',
+      timeline:
+        'Request response within 5-7 days for non-urgent issues, 24-48 hours for urgent issues.',
     },
     formal: {
       tone: 'Formal complaint with documented violations',
-      approach: 'Document all violations of regulations and standards. Use formal legal language. Reference specific statutes and codes. Make clear that this is an official complaint for the record. State that you are documenting all communications.',
-      consequences: 'Clearly state next steps if issue is not resolved: reporting to regulatory agencies, health department complaints, legal action.',
-      timeline: 'Demand response within 3-5 days for non-urgent issues, 24 hours for urgent issues. Include specific deadline date.'
+      approach:
+        'Document all violations of regulations and standards. Use formal legal language. Reference specific statutes and codes. Make clear that this is an official complaint for the record. State that you are documenting all communications.',
+      consequences:
+        'Clearly state next steps if issue is not resolved: reporting to regulatory agencies, health department complaints, legal action.',
+      timeline:
+        'Demand response within 3-5 days for non-urgent issues, 24 hours for urgent issues. Include specific deadline date.',
     },
     legal: {
       tone: 'Pre-legal notice with explicit consequences',
-      approach: 'This is the final notice before legal or regulatory action. Use formal legal language throughout. Document all previous attempts to resolve. Cite specific violations of law. State that you are prepared to pursue all available legal remedies.',
-      consequences: 'Explicitly state consequences: filing formal complaints with regulatory agencies (list specific agencies), pursuing legal action, seeking damages, terminating agreements, public records requests, media contact, etc.',
-      timeline: 'Final deadline: 48-72 hours for urgent issues, 3-5 days maximum for others. Include exact date and time. State that no further notice will be provided.'
-    }
+      approach:
+        'This is the final notice before legal or regulatory action. Use formal legal language throughout. Document all previous attempts to resolve. Cite specific violations of law. State that you are prepared to pursue all available legal remedies.',
+      consequences:
+        'Explicitly state consequences: filing formal complaints with regulatory agencies (list specific agencies), pursuing legal action, seeking damages, terminating agreements, public records requests, media contact, etc.',
+      timeline:
+        'Final deadline: 48-72 hours for urgent issues, 3-5 days maximum for others. Include exact date and time. State that no further notice will be provided.',
+    },
   };
 
-  return guidance[level] ?
-    `**Tone**: ${guidance[level].tone}\n**Approach**: ${guidance[level].approach}\n**Consequences**: ${guidance[level].consequences}\n**Timeline**: ${guidance[level].timeline}`
+  return guidance[level]
+    ? `**Tone**: ${guidance[level].tone}\n**Approach**: ${guidance[level].approach}\n**Consequences**: ${guidance[level].consequences}\n**Timeline**: ${guidance[level].timeline}`
     : '';
 }
 
 function getRecipientGuidance(recipient) {
   const guidance = {
-    'hoa': `## HOA-SPECIFIC GUIDANCE:
+    hoa: `## HOA-SPECIFIC GUIDANCE:
 - Reference specific sections of CC&Rs, Bylaws, or other governing documents if known
 - Mention HOA's duty to maintain common areas and address hazards
 - Reference state HOA laws regarding maintenance responsibilities
@@ -284,7 +296,7 @@ function getRecipientGuidance(recipient) {
 - Request access for inspection and remediation
 - Document for potential rent abatement, repair-and-deduct, or escrow account`,
 
-    'utility': `## UTILITY COMPANY GUIDANCE:
+    utility: `## UTILITY COMPANY GUIDANCE:
 - Reference utility's service quality standards and customer bill of rights
 - Cite Public Utilities Commission regulations
 - Mention any service guarantee programs
@@ -322,14 +334,14 @@ function getRecipientGuidance(recipient) {
 - Cite national standards and how local situation violates them
 - Mention coordination with state and local agencies`,
 
-    'nonprofit': `## ADVOCACY/LEGAL AID GUIDANCE:
+    nonprofit: `## ADVOCACY/LEGAL AID GUIDANCE:
 - Explain why you're seeking their help (legal representation, advocacy, testing, etc.)
 - Provide comprehensive background on the issue
 - Mention any community-wide or class-action potential
 - Reference barriers to resolution (financial, power imbalance, etc.)
 - Mention vulnerable populations affected (children, elderly, low-income, etc.)
 - Request specific assistance: legal advice, representation, testing, advocacy, etc.
-- Express willingness to participate in advocacy efforts or public education`
+- Express willingness to participate in advocacy efforts or public education`,
   };
 
   return guidance[recipient] || '';
@@ -337,10 +349,14 @@ function getRecipientGuidance(recipient) {
 
 function getToneGuidance(escalationLevel) {
   const tones = {
-    initial: 'Friendly, professional, assumes good faith. Use phrases like "I wanted to bring to your attention," "I would appreciate," "Could you please."',
-    professional: 'Professional, firm, direct. Use phrases like "I am writing to formally notify," "It is your responsibility to," "I expect action within."',
-    formal: 'Formal, documented, serious. Use phrases like "This letter serves as formal notice," "You are in violation of," "I am documenting this complaint," "Failure to act will result in."',
-    legal: 'Legal, final, consequential. Use phrases like "This is final notice," "I am prepared to pursue all legal remedies," "I will be filing complaints with," "You will be held liable for."'
+    initial:
+      'Friendly, professional, assumes good faith. Use phrases like "I wanted to bring to your attention," "I would appreciate," "Could you please."',
+    professional:
+      'Professional, firm, direct. Use phrases like "I am writing to formally notify," "It is your responsibility to," "I expect action within."',
+    formal:
+      'Formal, documented, serious. Use phrases like "This letter serves as formal notice," "You are in violation of," "I am documenting this complaint," "Failure to act will result in."',
+    legal:
+      'Legal, final, consequential. Use phrases like "This is final notice," "I am prepared to pursue all legal remedies," "I will be filing complaints with," "You will be held liable for."',
   };
   return tones[escalationLevel] || tones.professional;
 }
@@ -479,7 +495,7 @@ Provide comprehensive analysis suitable for including in advocacy emails or regu
 ## Lease Agreement:
 ${documentText}
 
-Provide analysis that helps tenant understand their rights and obligations under the lease and applicable law.`
+Provide analysis that helps tenant understand their rights and obligations under the lease and applicable law.`,
   };
 
   return prompts[documentType] || prompts.testReport;
@@ -491,7 +507,7 @@ export function generateSubjectLine(issueType, escalationLevel, location) {
     initial: '',
     professional: 'Follow-Up: ',
     formal: 'Formal Complaint: ',
-    legal: 'FINAL NOTICE: '
+    legal: 'FINAL NOTICE: ',
   };
 
   const issueLabels = {
@@ -499,13 +515,13 @@ export function generateSubjectLine(issueType, escalationLevel, location) {
     'water-quality': 'Water Contamination Issue',
     'hvac-ventilation': 'HVAC and Ventilation Issue',
     'lead-asbestos': 'Hazardous Materials Issue',
-    'radon': 'Radon Detection Issue',
+    radon: 'Radon Detection Issue',
     'carbon-monoxide': 'Carbon Monoxide Issue',
     'pest-infestation': 'Pest Infestation Issue',
-    'structural': 'Structural Safety Issue',
+    structural: 'Structural Safety Issue',
     'noise-pollution': 'Excessive Noise Issue',
     'utility-access': 'Utility Service Issue',
-    'electromagnetic': 'EMF Exposure Issue'
+    electromagnetic: 'EMF Exposure Issue',
   };
 
   const marker = urgencyMarkers[escalationLevel] || '';
@@ -519,5 +535,5 @@ export default {
   systemPrompt,
   generateEmailPrompt,
   generateDocumentAnalysisPrompt,
-  generateSubjectLine
+  generateSubjectLine,
 };
